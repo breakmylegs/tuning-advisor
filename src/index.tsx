@@ -26,6 +26,8 @@ import {
   aiPrivacyLine,
   aiStatus,
   capLine,
+  pcgwLines,
+  protondbLine,
   CATEGORY_LABELS,
   cycleLabel,
   deviceLine,
@@ -63,6 +65,7 @@ const listModels = callable<
   { ok: boolean; models?: { id: string; label: string }[]; error?: { message: string } }
 >("list_models");
 const generateAi = callable<[], Wrapped>("generate_ai");
+const setPcgwPassword = callable<[value: string], Wrapped>("set_pcgw_password");
 const importFromFile = callable<[], { ok: boolean; message?: string; imported?: string[]; path: string; view?: View }>(
   "import_from_file",
 );
@@ -490,6 +493,124 @@ function AiSettings({ view, apply }: { view: View; apply: (v: View | undefined) 
   );
 }
 
+function PcgwCard({ view }: { view: View }) {
+  const state = view.pcgw;
+  if (!state.enabled) return null;
+  return (
+    <PanelSection title="PCGamingWiki">
+      {state.error && (
+        <PanelSectionRow>
+          <div style={warn}>{state.error.message}</div>
+        </PanelSectionRow>
+      )}
+      {!state.data && !state.error && (
+        <PanelSectionRow>
+          <div style={note}>No PCGamingWiki page found for this game.</div>
+        </PanelSectionRow>
+      )}
+      {state.data &&
+        pcgwLines(state.data).map((g) => (
+          <PanelSectionRow key={g.title}>
+            <Field focusable bottomSeparator="none" label={g.title}>
+              <div style={{ ...note, wordBreak: "break-word" }}>
+                {g.lines.map((line, i) => (
+                  <div key={i}>{line}</div>
+                ))}
+              </div>
+            </Field>
+          </PanelSectionRow>
+        ))}
+      {state.data?.files.length ? (
+        <PanelSectionRow>
+          <div style={note}>Windows paths sit inside the game's Proton prefix, under steamapps/compatdata/APPID/pfx/drive_c.</div>
+        </PanelSectionRow>
+      ) : null}
+      {state.data && (
+        <PanelSectionRow>
+          <ButtonItem layout="below" onClick={() => open(state.data!.url)}>
+            Open the PCGamingWiki page
+          </ButtonItem>
+        </PanelSectionRow>
+      )}
+      <PanelSectionRow>
+        <div style={note}>
+          {state.data?.attribution ?? "From PCGamingWiki, CC BY-NC-SA."}
+          {state.cached ? " Cached." : ""}
+        </div>
+      </PanelSectionRow>
+    </PanelSection>
+  );
+}
+
+function SourceSettings({ view, apply }: { view: View; apply: (v: View | undefined) => void }) {
+  const [username, setUsername] = useState(view.settings.pcgw_username);
+  const [password, setPassword] = useState("");
+  const save = async (values: Partial<AdvisorSettings>) => apply((await saveSettings(values)).view);
+  return (
+    <>
+      <PanelSectionRow>
+        <ToggleField
+          label="ProtonDB reports"
+          description={
+            <span style={note}>
+              Downloads a 2 MB index of handheld reports from GitHub once, then monthly. ODbL data from ProtonDB.
+            </span>
+          }
+          checked={view.settings.source_protondb}
+          onChange={(v) => save({ source_protondb: v })}
+        />
+      </PanelSectionRow>
+      <PanelSectionRow>
+        <ToggleField
+          label="PCGamingWiki"
+          description={
+            <span style={note}>
+              Needs your own bot password from PCGamingWiki, Special:BotPasswords, with the Cargo query grant. Sends the
+              app ID to pcgamingwiki.com.
+            </span>
+          }
+          checked={view.settings.source_pcgw}
+          onChange={(v) => save({ source_pcgw: v })}
+        />
+      </PanelSectionRow>
+      {view.settings.source_pcgw && (
+        <>
+          <PanelSectionRow>
+            <TextField
+              label="PCGamingWiki bot user name"
+              description={<span style={note}>As shown on Special:BotPasswords, for example YourName@advisor.</span>}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onBlur={() => username !== view.settings.pcgw_username && save({ pcgw_username: username })}
+            />
+          </PanelSectionRow>
+          <PanelSectionRow>
+            <TextField
+              label="PCGamingWiki bot password"
+              description={<span style={note}>{view.pcgw.has_password ? "Stored." : "Not set."}</span>}
+              bIsPassword
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </PanelSectionRow>
+          <PanelSectionRow>
+            <ButtonItem
+              layout="below"
+              disabled={!password}
+              onClick={async () => {
+                apply((await setPcgwPassword(password)).view);
+                setPassword("");
+              }}
+            >
+              Save bot password
+            </ButtonItem>
+          </PanelSectionRow>
+        </>
+      )}
+    </>
+  );
+}
+
 function SettingsSection({ view, apply }: { view: View; apply: (v: View | undefined) => void }) {
   const [message, setMessage] = useState("");
   const save = async (values: Partial<AdvisorSettings>) => {
@@ -542,6 +663,7 @@ function SettingsSection({ view, apply }: { view: View; apply: (v: View | undefi
           Clear cache
         </ButtonItem>
       </PanelSectionRow>
+      <SourceSettings view={view} apply={apply} />
       <AiSettings view={view} apply={apply} />
       <PanelSectionRow>
         <ToggleField label="Check for updates daily" checked={view.settings.update_check} onChange={(v) => save({ update_check: v })} />
@@ -683,11 +805,23 @@ function Content() {
         )}
       </PanelSection>
 
+      {view.game && protondbLine(view.protondb) && (
+        <PanelSection>
+          <PanelSectionRow>
+            <div style={view.protondb.error ? warn : note}>
+              {protondbLine(view.protondb)} {view.protondb.summary?.attribution ?? ""}
+            </div>
+          </PanelSectionRow>
+        </PanelSection>
+      )}
+
       <RecommendationCard view={view} index={index} setIndex={setIndex} apply={apply} />
 
       {view.recommendations[index]?.compat_section && (
         <CompatCard section={view.recommendations[index].compat_section as CompatSection} />
       )}
+
+      {view.game && <PcgwCard view={view} />}
 
       {view.game && <AiCard view={view} apply={apply} />}
 

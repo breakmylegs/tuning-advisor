@@ -10,6 +10,36 @@ export interface AdvisorSettings {
   ai_provider: "" | "openai" | "anthropic" | "gemini";
   ai_model: string;
   ai_daily_cap: number;
+  source_protondb: boolean;
+  source_pcgw: boolean;
+  pcgw_username: string;
+}
+
+export interface ProtonDbState {
+  enabled: boolean;
+  error: { kind: string; message: string } | null;
+  dump: string | null;
+  summary: { reports: number; works: number; handheld: number; share: number | null; dump: string | null; attribution: string } | null;
+}
+
+export interface PcgwData {
+  page: string;
+  url: string;
+  upscaling: string[];
+  frame_gen: string[];
+  hdr: string | null;
+  ray_tracing: string | null;
+  ultrawide: string | null;
+  files: { type: string; platform: string; paths: string[] }[];
+  attribution: string;
+}
+
+export interface PcgwState {
+  enabled: boolean;
+  error: { kind: string; message: string } | null;
+  cached: boolean;
+  has_password: boolean;
+  data: PcgwData | null;
 }
 
 export interface AiProviderView {
@@ -112,6 +142,8 @@ export interface View {
   conflicts: { kind: string; text: string }[];
   game: Game | null;
   source: { cached: boolean; error: { message: string } | null; fetched_at: number | null; enabled: boolean };
+  protondb: ProtonDbState;
+  pcgw: PcgwState;
   recommendations: Recommendation[];
   update: { current: string; latest: string | null; available: boolean; install_url: string | null } | null;
   ai: { providers: AiProviderView[]; used_today: number; result: AiResult | null };

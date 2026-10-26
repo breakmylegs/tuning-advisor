@@ -46,9 +46,17 @@ def device_for_report(registry: Registry, reported: str) -> dict[str, Any] | Non
     return None
 
 
-def device_match(registry: Registry, reported: str, mine: dict[str, Any]) -> str:
+def chip(name: Any) -> str:
+    """Compare chips by name. "AMD Ryzen AI Z2 Extreme" is the same chip as "AMD Ryzen Z2 Extreme"."""
+    return " ".join(w for w in str(name or "").casefold().split() if w not in ("ai", "amd"))
+
+
+def device_match(registry: Registry, reported: str, mine: dict[str, Any], apu_reported: str = "") -> str:
     theirs = device_for_report(registry, reported)
     if theirs is None:
+        # ProtonDB reports name a chip, not a device.
+        if apu_reported and chip(apu_reported) == chip(mine.get("apu")):
+            return "same_apu"
         return "steam_deck" if "steam deck" in reported.casefold() and mine.get("family") != "steam-deck" else "other_handheld"
     if theirs["id"] == mine.get("id"):
         return "exact"
@@ -56,7 +64,7 @@ def device_match(registry: Registry, reported: str, mine: dict[str, Any]) -> str
         return "variant"
     if theirs.get("family") == mine.get("family") and mine.get("family") not in (None, "generic"):
         return "family"
-    if theirs.get("apu") and theirs.get("apu") == mine.get("apu"):
+    if theirs.get("apu") and chip(theirs.get("apu")) == chip(mine.get("apu")):
         return "same_apu"
     if theirs.get("family") == "steam-deck":
         return "steam_deck"
@@ -272,7 +280,7 @@ def build(reports: list[dict[str, Any]], registry: Registry, device: dict[str, A
     recs = []
     for rec in reports:
         rec = dict(rec)
-        rec["device_match"] = device_match(registry, rec.get("device_reported", ""), device)
+        rec["device_match"] = device_match(registry, rec.get("device_reported", ""), device, rec.get("apu_reported", ""))
         rec["confidence"] = confidence(rec, now, low_confidence_game)
         recs.append(rec)
     ranked = rank(recs, now)

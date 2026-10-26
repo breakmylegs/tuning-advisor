@@ -15,6 +15,8 @@ A Decky Loader plugin. It detects your game, handheld and tuning tools, then rec
 - Keeps your own launch option wrappers, such as `~/lsfg %command%`, in a combined suggestion and explains each change.
 - Flags launch options that run a command before the game or use shell operators. Never runs or applies any of them.
 - Copy to clipboard where Game Mode allows it. If it does not, the text stays on screen to type.
+- Optional ProtonDB reports from handhelds, from a monthly index of ProtonDB's open data. Adds Proton versions, launch options and notes, with the share of reports that say the game works.
+- Optional PCGamingWiki details with your own bot password: which upscalers and frame generation the game supports, and where it keeps config and save files. Flags a recommended upscaler the game does not list.
 - Optional AI recommendation with your own OpenAI, Anthropic or Google Gemini API key. Off until you set it up, and sent only when you press Generate. The reply is labelled "AI generated, unverified", shown next to the community reports, checked against your device, and never applied. Anything out of range is discarded and listed.
 
 Issues and source: [breakmylegs/decky-plugins](https://github.com/breakmylegs/decky-plugins).
@@ -29,6 +31,13 @@ Issues and source: [breakmylegs/decky-plugins](https://github.com/breakmylegs/de
 Steam Deck LCD and OLED, ROG Ally (Z1 and Z1 Extreme), ROG Ally X, ROG Xbox Ally, ROG Xbox Ally X, Legion Go, Legion Go S (Z2 Go and Z1 Extreme), Legion Go 2 (Z2 and Z2 Extreme), MSI Claw A8, Claw A1M, Claw 7 AI+ and Claw 8 AI+. Entries marked unverified in `registry/devices.json` still need checking against the maker's spec page.
 
 Any other handheld gets a generic profile. To add one, run `tools/capture_device.sh` in Desktop Mode and attach the output to a pull request that adds an entry to `registry/devices.json`.
+
+## ProtonDB and PCGamingWiki (optional)
+
+Both are off by default. Turn them on in settings.
+
+- **ProtonDB** downloads a 2 MB index from GitHub once, then monthly. It holds the latest reports from Steam Decks and Ryzen Z1 and Z2 handhelds.
+- **PCGamingWiki** needs a bot password. Sign in at pcgamingwiki.com, open Special:BotPasswords, create one with the grant "Create, query and delete data through the Cargo extension", then enter the bot user name (for example `YourName@advisor`) and password in settings.
 
 ## AI setup (optional)
 
@@ -55,7 +64,7 @@ Use a dedicated key with a spending limit. Set a daily request limit in settings
 
 ## Sources
 
-Community reports from [Deck Verified](https://deckverified.games) by DeckSettings, GPL-3.0. Each recommendation links to its report. Device match strings from [Handheld Daemon](https://github.com/hhd-dev/hhd), [InputPlumber](https://github.com/ShadowBlip/InputPlumber) and Valve's steamos-manager.
+Community reports from [Deck Verified](https://deckverified.games) by DeckSettings, GPL-3.0. Each recommendation links to its report. Contains information from [ProtonDB](https://www.protondb.com), made available under the [ODbL](https://opendatacommons.org/licenses/odbl/). Game details from [PCGamingWiki](https://www.pcgamingwiki.com), CC BY-NC-SA. Device match strings from [Handheld Daemon](https://github.com/hhd-dev/hhd), [InputPlumber](https://github.com/ShadowBlip/InputPlumber) and Valve's steamos-manager.
 
 ## Licence
 

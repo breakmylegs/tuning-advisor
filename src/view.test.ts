@@ -10,6 +10,8 @@ import {
   groups,
   linkOuts,
   matchNote,
+  pcgwLines,
+  protondbLine,
   protonLine,
   shortDate,
   sourceLine,
@@ -119,5 +121,40 @@ describe("advisor view", () => {
     expect(capLine(2, 5)).toBe("2 of 5 AI requests used today.");
     expect(capLine(3, 0)).toBe("3 AI requests today. No daily limit.");
     expect(aiPrivacyLine("OpenAI")).toContain("to OpenAI. Nothing else.");
+  });
+
+  it("names each source and drops votes where there are none", () => {
+    expect(sourceLine({ ...rec, source: "protondb", votes: 0 }, false)).toBe(
+      "ProtonDB | reported on Lenovo Legion Go S | 10 Jan 2026 | medium confidence",
+    );
+  });
+
+  it("summarises ProtonDB", () => {
+    const base = { enabled: true, error: null, dump: "oct1_2026" };
+    const summary = { reports: 40, works: 30, handheld: 3, share: 75, dump: "oct1_2026", attribution: "x" };
+    expect(protondbLine({ ...base, summary })).toBe("ProtonDB (oct1_2026): 75% of 40 reports say it works. 3 from handhelds.");
+    expect(protondbLine({ ...base, summary: null })).toBe("ProtonDB has no reports from handhelds for this game.");
+    expect(protondbLine({ ...base, enabled: false, summary: null })).toBe("");
+    expect(protondbLine({ ...base, summary: null, error: { kind: "offline", message: "No network." } })).toBe(
+      "ProtonDB: No network.",
+    );
+  });
+
+  it("lists PCGamingWiki features and files", () => {
+    const groups = pcgwLines({
+      page: "P",
+      url: "u",
+      upscaling: ["DLSS", "FSR 3.1"],
+      frame_gen: [],
+      hdr: "true",
+      ray_tracing: "false",
+      ultrawide: null,
+      files: [{ type: "config", platform: "Windows", paths: ["a", "b"] }],
+      attribution: "x",
+    });
+    expect(groups).toEqual([
+      { title: "Graphics options", lines: ["Upscalers: DLSS, FSR 3.1", "Supports HDR"] },
+      { title: "Config and save files", lines: ["config (Windows): a  or  b"] },
+    ]);
   });
 });

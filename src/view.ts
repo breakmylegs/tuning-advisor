@@ -1,5 +1,5 @@
 // Pure display logic for the advisor panel. Tested with vitest.
-import type { AiResult, Game, ProtonSection, Recommendation, View } from "./types";
+import type { AiResult, Game, PcgwData, ProtonDbState, ProtonSection, Recommendation, View } from "./types";
 
 export const MATCH_LABELS: Record<string, string> = {
   exact: "your device",
@@ -34,13 +34,20 @@ export function shortDate(iso: string): string {
   return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
+export const SOURCE_NAMES: Record<string, string> = {
+  deckverified: "Deck Verified",
+  protondb: "ProtonDB",
+  pcgw: "PCGamingWiki",
+  ai: "AI",
+};
+
 export function sourceLine(rec: Recommendation, cached: boolean): string {
   if (rec.source === "fallback") return "General guidance, not game-specific";
-  const parts = ["Deck Verified"];
+  const parts = [SOURCE_NAMES[rec.source] ?? rec.source];
   if (rec.device_reported) parts.push(`reported on ${rec.device_reported}`);
   const date = shortDate(rec.report_date);
   if (date) parts.push(date);
-  parts.push(`${rec.votes >= 0 ? "+" : ""}${rec.votes} votes`);
+  if (rec.source === "deckverified") parts.push(`${rec.votes >= 0 ? "+" : ""}${rec.votes} votes`);
   parts.push(`${rec.confidence} confidence`);
   if (cached) parts.push("cached");
   return parts.join(" | ");
@@ -137,4 +144,26 @@ export function capLine(used: number, cap: number): string {
 
 export function aiPrivacyLine(providerName: string): string {
   return `Sends the game name, app ID, device profile, your selected tools and short report excerpts to ${providerName}. Nothing else.`;
+}
+
+export function protondbLine(state: ProtonDbState): string {
+  if (state.error) return `ProtonDB: ${state.error.message}`;
+  const sum = state.summary;
+  if (!sum) return state.enabled ? "ProtonDB has no reports from handhelds for this game." : "";
+  const share = sum.share === null ? "" : `${sum.share}% of ${sum.reports} reports say it works. `;
+  return `ProtonDB (${sum.dump}): ${share}${sum.handheld} from handhelds.`;
+}
+
+export function pcgwLines(data: PcgwData): { title: string; lines: string[] }[] {
+  const features: string[] = [];
+  if (data.upscaling.length) features.push(`Upscalers: ${data.upscaling.join(", ")}`);
+  if (data.frame_gen.length) features.push(`Frame generation: ${data.frame_gen.join(", ")}`);
+  const flags: string[] = [];
+  if (data.hdr === "true") flags.push("HDR");
+  if (data.ray_tracing === "true") flags.push("ray tracing");
+  if (flags.length) features.push(`Supports ${flags.join(" and ")}`);
+  const groups = [{ title: "Graphics options", lines: features }];
+  const files = data.files.map((f) => `${f.type || "Files"} (${f.platform || "any"}): ${f.paths.join("  or  ")}`);
+  if (files.length) groups.push({ title: "Config and save files", lines: files });
+  return groups.filter((g) => g.lines.length > 0);
 }

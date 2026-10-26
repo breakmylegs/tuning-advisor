@@ -82,6 +82,12 @@ class Plugin:
         except ValueError as err:
             return {"ok": False, "message": str(err)}
 
+    async def set_pcgw_password(self, value):
+        try:
+            return {"ok": True, "view": await self.service.set_pcgw_password(value)}
+        except ValueError as err:
+            return {"ok": False, "message": str(err)}
+
     async def list_models(self, provider):
         return await self.service.list_models(provider)
 

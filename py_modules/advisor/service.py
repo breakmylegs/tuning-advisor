@@ -18,7 +18,7 @@ from plugin_core.secrets import SecretStore, import_path, read_import_file
 from plugin_core.settings import JsonStore
 from plugin_core.update_check import UpdateChecker, load_build_info
 
-from . import compat, deckverified, device as devmod, recommend, registry as regmod, stack as stackmod
+from . import compat, deckverified, device as devmod, pcgw, protondb, recommend, registry as regmod, stack as stackmod
 from .ai import PROVIDERS, SECRET_NAMES
 from .ai.runner import AiRunner
 from .cache import SourceCache
@@ -35,8 +35,12 @@ DEFAULTS: dict[str, Any] = {
     "ai_provider": "",
     "ai_model": "",
     "ai_daily_cap": 0,
+    "source_protondb": False,
+    "source_pcgw": False,
+    "pcgw_username": "",
 }
 AI_SECRETS = tuple(SECRET_NAMES.values())
+PCGW_SECRET = "pcgw_bot_password"
 
 # Non-Steam shortcuts carry app IDs above this. Their reports are matched by name.
 SHORTCUT_APPID_MIN = 2 ** 31
@@ -48,9 +52,11 @@ class AdvisorService:
     def __init__(self, settings_dir: str, runtime_dir: str, plugin_dir: str, decky_home: str, user_home: str,
                  user: str, version: str, emit: Emit, logger: Any, root: str = "/",
                  fetch_reports: Callable[[int | None, str | None], dict] = deckverified.fetch,
-                 ai_providers: dict | None = None):
+                 ai_providers: dict | None = None,
+                 protondb_fetch: Callable[[str], bytes] = protondb.download,
+                 pcgw_factory: Callable[..., Any] = pcgw.PcgwClient):
         self.settings = JsonStore(os.path.join(settings_dir, "settings.json"), DEFAULTS)
-        self.secrets = SecretStore(os.path.join(settings_dir, "secrets.json"), AI_SECRETS)
+        self.secrets = SecretStore(os.path.join(settings_dir, "secrets.json"), AI_SECRETS + (PCGW_SECRET,))
         self.registry = regmod.load(os.path.join(plugin_dir, "registry"))
         self.cache = SourceCache(runtime_dir)
         self.ai = AiRunner(self.secrets, self.cache, runtime_dir, ai_providers)
@@ -63,7 +69,16 @@ class AdvisorService:
         self._emit = emit
         self.log = logger
         self._fetch_reports = fetch_reports
-        self.updates = UpdateChecker(load_build_info(plugin_dir), version, os.path.join(runtime_dir, "update.json"), fetch_json)
+        build_info = load_build_info(plugin_dir)
+        self.updates = UpdateChecker(build_info, version, os.path.join(runtime_dir, "update.json"), fetch_json)
+        self.protondb = protondb.ProtonDbIndex(runtime_dir, protondb.index_url(build_info.get("monorepo", "")),
+                                               fetch=protondb_fetch)
+        self._pcgw_factory = pcgw_factory
+        self._pcgw_ua = pcgw.user_agent(version, build_info.get("monorepo", ""))
+        self.pdb_reports: list[dict[str, Any]] = []
+        self.pdb_state: dict[str, Any] = {"enabled": False, "error": None, "summary": None, "dump": None}
+        self.pcgw_data: dict[str, Any] | None = None
+        self.pcgw_state: dict[str, Any] = {"enabled": False, "error": None, "cached": False}
         self.update_info: dict[str, Any] | None = None
         self._update_task: asyncio.Task | None = None
         self.facts: dict[str, Any] = {}
@@ -144,6 +159,56 @@ class AdvisorService:
         return f"{ident}:build:{game.get('build_id') or ''}"
 
     async def load_reports(self, force: bool) -> None:
+        await self._load_deckverified(force)
+        await self._load_protondb()
+        await self._load_pcgw(force)
+
+    async def _load_protondb(self) -> None:
+        enabled = bool(self.settings.get("source_protondb"))
+        self.pdb_reports = []
+        self.pdb_state = {"enabled": enabled, "error": None, "summary": None, "dump": None}
+        appid = (self.game or {}).get("appid")
+        if not enabled or not appid:
+            return
+        try:
+            header = await asyncio.to_thread(self.protondb.ensure)
+            entry = await asyncio.to_thread(self.protondb.lookup, appid)
+        except Exception as exc:  # noqa: BLE001, classified
+            err = classify(exc)
+            self.log.warning("protondb index failed: %s", err.kind)
+            self.pdb_state["error"] = err.to_dict()
+            return
+        self.pdb_state["dump"] = header.get("dump")
+        self.pdb_state["summary"] = protondb.summary(entry, header)
+        self.pdb_reports = protondb.normalise(entry, appid) if entry else []
+
+    async def _load_pcgw(self, force: bool) -> None:
+        enabled = bool(self.settings.get("source_pcgw"))
+        self.pcgw_data = None
+        self.pcgw_state = {"enabled": enabled, "error": None, "cached": False}
+        game = self.game or {}
+        if not enabled or not (game.get("appid") or game.get("name")):
+            return
+        key = "pcgw:" + self._cache_key()
+        cached = self.cache.get(pcgw.SOURCE, key)
+        if cached and not force and self.cache.fresh(cached[1]):
+            self.pcgw_data, self.pcgw_state["cached"] = cached[0], True
+            return
+        client = self._pcgw_factory(self.settings.get("pcgw_username"), self.secrets.get(PCGW_SECRET), self._pcgw_ua)
+        try:
+            data = await asyncio.to_thread(client.game, game.get("appid"),
+                                           None if game.get("appid") else game.get("name"))
+        except Exception as exc:  # noqa: BLE001, classified
+            err = classify(exc)
+            self.log.warning("pcgamingwiki failed: %s", err.kind)
+            self.pcgw_state["error"] = err.to_dict()
+            if cached:
+                self.pcgw_data, self.pcgw_state["cached"] = cached[0], True
+            return
+        self.cache.put(pcgw.SOURCE, key, data)
+        self.pcgw_data = data
+
+    async def _load_deckverified(self, force: bool) -> None:
         async with self._lock:
             self.reports = []
             enabled = bool(self.settings.get("source_deckverified"))
@@ -184,9 +249,14 @@ class AdvisorService:
     def recommendations(self) -> list[dict[str, Any]]:
         low = bool(self.game and self.game.get("shortcut"))
         selected = self.selected()
-        recs = recommend.build(self.reports, self.registry, self.device, selected, self.settings.get("workload"), low)
+        recs = recommend.build(self.reports + self.pdb_reports, self.registry, self.device, selected,
+                               self.settings.get("workload"), low)
+        listed = (self.pcgw_data or {}).get("upscaling") or []
         for rec in recs:
             rec["compat_section"] = compat.section(rec, self.current_compat, selected, low)
+            name = (rec.get("upscaler") or {}).get("name")
+            if name and listed and not pcgw.upscaler_supported(name, listed):
+                rec["flags"].append(f"PCGamingWiki does not list {name} for this game. It lists {', '.join(listed)}.")
         return recs
 
     # Frontend API
@@ -218,6 +288,8 @@ class AdvisorService:
             "conflicts": stackmod.conflicts(self.registry, self.detected, self.device),
             "game": self.game,
             "source": self.source_state,
+            "protondb": self.pdb_state,
+            "pcgw": dict(self.pcgw_state, data=self.pcgw_data, has_password=self.secrets.has(PCGW_SECRET)),
             "recommendations": self.recommendations() if self.game else [recommend.fallback(self.device, self.settings.get("workload"))],
             "update": self.update_info,
             "ai": {
@@ -266,7 +338,7 @@ class AdvisorService:
         changed = self.settings.update(values)
         if "device_override" in changed:
             await asyncio.to_thread(self.detect)
-        if "source_deckverified" in changed:
+        if {"source_deckverified", "source_protondb", "source_pcgw", "pcgw_username"} & set(changed):
             await self.load_reports(force=False)
         return self.view()
 
@@ -274,6 +346,11 @@ class AdvisorService:
 
     def set_secret(self, name: str, value: str) -> dict[str, Any]:
         self.secrets.set(name, value)
+        return self.view()
+
+    async def set_pcgw_password(self, value: str) -> dict[str, Any]:
+        self.secrets.set(PCGW_SECRET, value)
+        await self._load_pcgw(force=True)
         return self.view()
 
     def clear_secret(self, name: str) -> dict[str, Any]:
