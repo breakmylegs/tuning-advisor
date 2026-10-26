@@ -1,6 +1,6 @@
 {
   "name": "tuning-advisor",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Recommend per-game settings for your handheld and tuning tools. Read only",
   "type": "module",
   "private": true,

@@ -30,7 +30,7 @@ def dev(device_id):
 
 def test_registry_ids_unique_and_fields_present():
     ids = [d["id"] for d in REG.devices]
-    assert len(ids) == len(set(ids)) == 16
+    assert len(ids) == len(set(ids)) == 17
     for d in REG.devices:
         assert d["tdp_w"]["min"] < d["tdp_w"]["max"], d["id"]
         assert d["display"]["refresh_hz_max"], d["id"]
@@ -83,6 +83,11 @@ def test_cpu_splits_variants_that_share_dmi():
     assert devmod.detect(REG, {**ally, "cpu_model": "AMD Ryzen Z1 Extreme"})["id"] == "asus-rog-ally-z1e"
     gos = {"sys_vendor": "LENOVO", "product_name": "83L3"}
     assert devmod.detect(REG, {**gos, "cpu_model": "AMD Ryzen Z2 Go"})["id"] == "lenovo-legion-go-s-z2go"
+    # Lenovo PSREF lists a Z1 Legion Go as well as the Z1 Extreme one.
+    go = {"sys_vendor": "LENOVO", "product_name": "83E1"}
+    assert devmod.detect(REG, {**go, "cpu_model": "AMD Ryzen Z1"})["id"] == "lenovo-legion-go-z1"
+    assert devmod.detect(REG, {**go, "cpu_model": "AMD Ryzen Z1 Extreme"})["id"] == "lenovo-legion-go"
+    assert devmod.detect(REG, {**go, "cpu_model": ""})["id"] == "lenovo-legion-go"
 
 
 def test_variant_split_does_not_depend_on_registry_order():

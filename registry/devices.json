@@ -154,7 +154,28 @@
       "tdp_bands_w": { "light": 8, "medium": 15, "heavy": 20, "max": 30, "derived": false },
       "steam_native_tdp": true,
       "report_aliases": ["^Lenovo Legion Go$"],
-      "sources": ["https://github.com/hhd-dev/hhd", "https://github.com/Rayekkk/LeGoTDP"],
+      "sources": ["https://psref.lenovo.com/syspool/Sys/PDF/Legion/Legion_Go_8APU1/Legion_Go_8APU1_Spec.pdf", "https://github.com/hhd-dev/hhd", "https://github.com/Rayekkk/LeGoTDP"],
+      "verified": true
+    },
+    {
+      "id": "lenovo-legion-go-z1",
+      "vendor": "Lenovo",
+      "model": "Legion Go",
+      "family": "legion-go",
+      "match": { "sys_vendor": ["LENOVO"], "product_name": ["83E1"] },
+      "cpu_contains": ["Z1"],
+      "cpu_excludes": ["Extreme"],
+      "apu": "AMD Ryzen Z1",
+      "cpu": "Zen 4, 6C/12T",
+      "gpu": { "vendor": "amd", "name": "Radeon 740M", "arch": "RDNA 3", "cu": 4 },
+      "ram_gb": [16],
+      "display": { "width": 2560, "height": 1600, "panel": "IPS", "refresh_hz_max": 144, "vrr": false, "vrr_range_hz": null },
+      "battery_wh": 49.2,
+      "tdp_w": { "min": 5, "max": 30 },
+      "tdp_bands_w": { "light": 8, "medium": 15, "heavy": 20, "max": 30, "derived": false },
+      "steam_native_tdp": true,
+      "report_aliases": [],
+      "sources": ["https://psref.lenovo.com/syspool/Sys/PDF/Legion/Legion_Go_8APU1/Legion_Go_8APU1_Spec.pdf", "https://github.com/hhd-dev/hhd", "https://github.com/Rayekkk/LeGoTDP"],
       "verified": false
     },
     {
@@ -168,14 +189,14 @@
       "cpu": "Zen 3+, 4C/8T",
       "gpu": { "vendor": "amd", "name": "Radeon 680M class", "arch": "RDNA 2", "cu": 12 },
       "ram_gb": [16, 32],
-      "display": { "width": 1920, "height": 1200, "panel": "IPS", "refresh_hz_max": 120, "vrr": true, "vrr_range_hz": null },
+      "display": { "width": 1920, "height": 1200, "panel": "IPS", "refresh_hz_max": 120, "vrr": true, "vrr_range_hz": [48, 120] },
       "battery_wh": 55.5,
       "tdp_w": { "min": 5, "max": 40 },
       "tdp_bands_w": { "light": 14, "medium": 23, "heavy": 30, "max": 37, "derived": true },
       "steam_native_tdp": true,
       "report_aliases": ["^Lenovo Legion Go S Z2 ?Go$"],
-      "sources": ["https://github.com/hhd-dev/hhd", "https://github.com/Rayekkk/LeGoTDP"],
-      "verified": false
+      "sources": ["https://psref.lenovo.com/syspool/Sys/PDF/Legion/Legion_Go_S_8ARP1/Legion_Go_S_8ARP1_Spec.PDF", "https://github.com/hhd-dev/hhd", "https://github.com/Rayekkk/LeGoTDP"],
+      "verified": true
     },
     {
       "id": "lenovo-legion-go-s-z1e",
@@ -188,14 +209,14 @@
       "cpu": "Zen 4, 8C/16T",
       "gpu": { "vendor": "amd", "name": "Radeon 780M", "arch": "RDNA 3", "cu": 12 },
       "ram_gb": [16, 32],
-      "display": { "width": 1920, "height": 1200, "panel": "IPS", "refresh_hz_max": 120, "vrr": true, "vrr_range_hz": null },
+      "display": { "width": 1920, "height": 1200, "panel": "IPS", "refresh_hz_max": 120, "vrr": true, "vrr_range_hz": [48, 120] },
       "battery_wh": 55.5,
       "tdp_w": { "min": 5, "max": 40 },
       "tdp_bands_w": { "light": 14, "medium": 23, "heavy": 30, "max": 37, "derived": true },
       "steam_native_tdp": true,
       "report_aliases": ["^Lenovo Legion Go S( Z1E)?$"],
-      "sources": ["https://github.com/hhd-dev/hhd", "https://github.com/Rayekkk/LeGoTDP"],
-      "verified": false
+      "sources": ["https://psref.lenovo.com/syspool/Sys/PDF/Legion/Legion_Go_S_8APU1/Legion_Go_S_8APU1_Spec.PDF", "https://github.com/hhd-dev/hhd", "https://github.com/Rayekkk/LeGoTDP"],
+      "verified": true
     },
     {
       "id": "lenovo-legion-go-2-z2e",
