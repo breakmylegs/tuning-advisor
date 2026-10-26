@@ -7,6 +7,26 @@ export interface AdvisorSettings {
   workload: Workload;
   update_check: boolean;
   remove_data_on_uninstall: boolean;
+  ai_provider: "" | "openai" | "anthropic" | "gemini";
+  ai_model: string;
+  ai_daily_cap: number;
+}
+
+export interface AiProviderView {
+  id: "openai" | "anthropic" | "gemini";
+  name: string;
+  key: { set: boolean; masked: string };
+}
+
+export interface AiResult {
+  label: string;
+  provider: string;
+  model: string;
+  cached: boolean;
+  rec: Recommendation | null;
+  discarded: string[];
+  error: { kind: string; message: string } | null;
+  generated_at: number | null;
 }
 
 export interface LaunchSection {
@@ -94,4 +114,6 @@ export interface View {
   source: { cached: boolean; error: { message: string } | null; fetched_at: number | null; enabled: boolean };
   recommendations: Recommendation[];
   update: { current: string; latest: string | null; available: boolean; install_url: string | null } | null;
+  ai: { providers: AiProviderView[]; used_today: number; result: AiResult | null };
+  import_path: string;
 }

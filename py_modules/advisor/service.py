@@ -14,10 +14,13 @@ from typing import Any, Awaitable, Callable, Mapping
 
 from plugin_core.errors import classify
 from plugin_core.http import fetch_json
+from plugin_core.secrets import SecretStore, import_path, read_import_file
 from plugin_core.settings import JsonStore
 from plugin_core.update_check import UpdateChecker, load_build_info
 
 from . import compat, deckverified, device as devmod, recommend, registry as regmod, stack as stackmod
+from .ai import PROVIDERS, SECRET_NAMES
+from .ai.runner import AiRunner
 from .cache import SourceCache
 
 Emit = Callable[..., Awaitable[None]]
@@ -29,7 +32,11 @@ DEFAULTS: dict[str, Any] = {
     "workload": "medium",
     "update_check": True,
     "remove_data_on_uninstall": False,
+    "ai_provider": "",
+    "ai_model": "",
+    "ai_daily_cap": 0,
 }
+AI_SECRETS = tuple(SECRET_NAMES.values())
 
 # Non-Steam shortcuts carry app IDs above this. Their reports are matched by name.
 SHORTCUT_APPID_MIN = 2 ** 31
@@ -40,10 +47,14 @@ class AdvisorService:
 
     def __init__(self, settings_dir: str, runtime_dir: str, plugin_dir: str, decky_home: str, user_home: str,
                  user: str, version: str, emit: Emit, logger: Any, root: str = "/",
-                 fetch_reports: Callable[[int | None, str | None], dict] = deckverified.fetch):
+                 fetch_reports: Callable[[int | None, str | None], dict] = deckverified.fetch,
+                 ai_providers: dict | None = None):
         self.settings = JsonStore(os.path.join(settings_dir, "settings.json"), DEFAULTS)
+        self.secrets = SecretStore(os.path.join(settings_dir, "secrets.json"), AI_SECRETS)
         self.registry = regmod.load(os.path.join(plugin_dir, "registry"))
         self.cache = SourceCache(runtime_dir)
+        self.ai = AiRunner(self.secrets, self.cache, runtime_dir, ai_providers)
+        self.ai_result: dict[str, Any] | None = None
         self.decky_home = decky_home
         self.user_home = user_home
         self.user = user
@@ -84,6 +95,7 @@ class AdvisorService:
     async def uninstall(self) -> None:
         if self.settings.get("remove_data_on_uninstall"):
             self.settings.delete_file()
+            self.secrets.delete_file()
             self.cache.clear()
 
     async def _update_loop(self) -> None:
@@ -117,6 +129,7 @@ class AdvisorService:
                        launch_options: str = "", compat_tool: str = "") -> dict[str, Any]:
         appid = int(appid) if appid else None
         self.set_current_compat(launch_options, compat_tool)
+        self.ai_result = None
         if appid and appid >= SHORTCUT_APPID_MIN:
             shortcut = True
         self.game = {"appid": None if shortcut else appid, "shortcut_appid": appid if shortcut else None,
@@ -207,6 +220,12 @@ class AdvisorService:
             "source": self.source_state,
             "recommendations": self.recommendations() if self.game else [recommend.fallback(self.device, self.settings.get("workload"))],
             "update": self.update_info,
+            "ai": {
+                "providers": self.ai.providers_view(),
+                "used_today": self.ai.used_today(),
+                "result": self.ai_result,
+            },
+            "import_path": import_path(self.user_home, self.plugin_id),
         }
 
     async def refresh(self) -> dict[str, Any]:
@@ -225,6 +244,14 @@ class AdvisorService:
             raise ValueError("unknown device")
         if "workload" in values and values["workload"] not in regmod.WORKLOADS:
             raise ValueError("workload must be light, medium or heavy")
+        if "ai_provider" in values and values["ai_provider"] not in ("", *PROVIDERS):
+            raise ValueError("unknown AI provider")
+        if "ai_daily_cap" in values:
+            cap = values["ai_daily_cap"]
+            if not isinstance(cap, int) or isinstance(cap, bool) or not 0 <= cap <= 1000:
+                raise ValueError("daily cap must be 0 to 1000")
+        if "ai_provider" in values and values["ai_provider"] != self.settings.get("ai_provider"):
+            values.setdefault("ai_model", "")
         if "stack_overrides" in values:
             overrides = values["stack_overrides"]
             if not isinstance(overrides, Mapping):
@@ -242,6 +269,55 @@ class AdvisorService:
         if "source_deckverified" in changed:
             await self.load_reports(force=False)
         return self.view()
+
+    # AI, phase 2. Button-triggered only.
+
+    def set_secret(self, name: str, value: str) -> dict[str, Any]:
+        self.secrets.set(name, value)
+        return self.view()
+
+    def clear_secret(self, name: str) -> dict[str, Any]:
+        self.secrets.clear(name)
+        return self.view()
+
+    async def list_models(self, provider_id: str) -> dict[str, Any]:
+        try:
+            models = await asyncio.to_thread(self.ai.list_models, provider_id)
+        except Exception as exc:  # noqa: BLE001, classified
+            return {"ok": False, "error": classify(exc).to_dict()}
+        return {"ok": True, "models": models}
+
+    async def generate_ai(self) -> dict[str, Any]:
+        if not self.game:
+            self.ai_result = {"error": {"kind": "bad_response", "message": "Pick a game first."}, "rec": None}
+            return self.view()
+        self.ai_result = await asyncio.to_thread(
+            self.ai.generate, self.settings.get("ai_provider"), self.settings.get("ai_model"),
+            self.settings.get("ai_daily_cap"), self.game, self.device, self.selected(), self.registry,
+            self.reports, self.current_compat)
+        return self.view()
+
+    def import_from_file(self) -> dict[str, Any]:
+        path = import_path(self.user_home, self.plugin_id)
+        try:
+            settings, secrets = read_import_file(path, ("ai_provider", "ai_model", "ai_daily_cap"), AI_SECRETS)
+            for name, value in secrets.items():
+                self.secrets.set(name, value)
+            if settings:
+                self.settings.update(settings)
+        except ValueError as err:
+            return {"ok": False, "message": str(err), "path": path}
+        return {"ok": True, "imported": sorted(list(settings) + list(secrets)), "path": path, "view": self.view()}
+
+    def delete_import_file(self) -> dict[str, Any]:
+        path = import_path(self.user_home, self.plugin_id)
+        try:
+            os.unlink(path)
+        except FileNotFoundError:
+            return {"ok": True, "message": "The import file was already gone."}
+        except OSError:
+            return {"ok": False, "message": f"Could not delete {path}. Delete it with a file manager."}
+        return {"ok": True, "message": "Import file deleted."}
 
     def clear_cache(self) -> dict[str, Any]:
         removed = self.cache.clear()

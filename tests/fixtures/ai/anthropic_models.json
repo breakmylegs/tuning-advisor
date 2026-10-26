@@ -1,0 +1,36 @@
+{
+  "_note": "Shaped from the provider's documented response format, not recorded from a live call.",
+  "data": [
+    {
+      "id": "claude-opus-5-5",
+      "display_name": "Claude Opus 5.5",
+      "lifecycle": "active",
+      "capabilities": {
+        "structured_outputs": {
+          "supported": true
+        }
+      }
+    },
+    {
+      "id": "claude-old-1",
+      "display_name": "Claude Old",
+      "lifecycle": "retired",
+      "capabilities": {
+        "structured_outputs": {
+          "supported": true
+        }
+      }
+    },
+    {
+      "id": "claude-nostruct",
+      "display_name": "No structured output",
+      "lifecycle": "active",
+      "capabilities": {
+        "structured_outputs": {
+          "supported": false
+        }
+      }
+    }
+  ],
+  "has_more": false
+}

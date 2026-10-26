@@ -169,6 +169,7 @@ class HttpClient:
         form: Mapping[str, Any] | None = None,
         headers: Mapping[str, str] | None = None,
         timeout: float | None = None,
+        json_body: Any = None,
     ) -> Response:
         """Send one request. Returns any HTTP status as a Response. Raises PluginError
         only when no HTTP reply arrived."""
@@ -180,6 +181,9 @@ class HttpClient:
         if form is not None:
             data = urllib.parse.urlencode(_clean(form)).encode("ascii")
             merged["Content-Type"] = "application/x-www-form-urlencoded"
+        elif json_body is not None:
+            data = json.dumps(json_body).encode("utf-8")
+            merged["Content-Type"] = "application/json"
         req = urllib.request.Request(url, data=data, method=method.upper(), headers=merged)
         try:
             with self._opener.open(req, timeout=timeout or self.timeout) as res:

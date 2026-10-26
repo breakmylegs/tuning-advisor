@@ -1,5 +1,5 @@
 // Pure display logic for the advisor panel. Tested with vitest.
-import type { Game, ProtonSection, Recommendation, View } from "./types";
+import type { AiResult, Game, ProtonSection, Recommendation, View } from "./types";
 
 export const MATCH_LABELS: Record<string, string> = {
   exact: "your device",
@@ -116,4 +116,25 @@ export function protonLine(p: ProtonSection): string {
   const status = p.matches ? "You already use this." : `You use ${p.current}.`;
   const build = p.build ? ` The report used build ${p.build}.` : "";
   return `${p.recommended}.${build} ${status}`;
+}
+
+export const SECRET_FOR: Record<string, string> = {
+  openai: "openai_api_key",
+  anthropic: "anthropic_api_key",
+  gemini: "gemini_api_key",
+};
+
+export function aiStatus(result: AiResult | null): string {
+  if (!result) return "";
+  if (result.error) return result.error.message;
+  const when = result.cached ? "From cache" : "Just now";
+  return `${result.label}. ${when}, ${result.model}.`;
+}
+
+export function capLine(used: number, cap: number): string {
+  return cap > 0 ? `${used} of ${cap} AI requests used today.` : `${used} AI requests today. No daily limit.`;
+}
+
+export function aiPrivacyLine(providerName: string): string {
+  return `Sends the game name, app ID, device profile, your selected tools and short report excerpts to ${providerName}. Nothing else.`;
 }

@@ -1,0 +1,16 @@
+{
+  "_note": "Shaped from the provider's documented response format, not recorded from a live call.",
+  "candidates": [
+    {
+      "finishReason": "STOP",
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "{\"power\": {\"tdp_w\": 15, \"gpu_clock_mhz\": null}, \"display\": {\"refresh_hz\": 144, \"fps_cap\": 60, \"vrr\": true}, \"scaling\": {\"steam_filter\": \"Linear\", \"game_resolution\": null}, \"upscaler\": {\"name\": \"FSR 3.1\", \"mode\": \"Quality\"}, \"frame_gen\": {\"tool\": null, \"mode\": null}, \"in_game\": {\"preset\": \"Medium\", \"settings\": [{\"name\": \"Shadows\", \"value\": \"Low\"}]}, \"compat\": {\"proton\": \"Proton Experimental\", \"launch_options\": \"PROTON_LOG=1 %command%\"}, \"notes\": \"A balanced starting point for this device.\"}"
+          }
+        ]
+      }
+    }
+  ]
+}

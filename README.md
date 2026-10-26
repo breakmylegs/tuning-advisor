@@ -15,6 +15,7 @@ A Decky Loader plugin. It detects your game, handheld and tuning tools, then rec
 - Keeps your own launch option wrappers, such as `~/lsfg %command%`, in a combined suggestion and explains each change.
 - Flags launch options that run a command before the game or use shell operators. Never runs or applies any of them.
 - Copy to clipboard where Game Mode allows it. If it does not, the text stays on screen to type.
+- Optional AI recommendation with your own OpenAI, Anthropic or Google Gemini API key. Off until you set it up, and sent only when you press Generate. The reply is labelled "AI generated, unverified", shown next to the community reports, checked against your device, and never applied. Anything out of range is discarded and listed.
 
 Issues and source: [breakmylegs/decky-plugins](https://github.com/breakmylegs/decky-plugins).
 
@@ -29,11 +30,26 @@ Steam Deck LCD and OLED, ROG Ally (Z1 and Z1 Extreme), ROG Ally X, ROG Xbox Ally
 
 Any other handheld gets a generic profile. To add one, run `tools/capture_device.sh` in Desktop Mode and attach the output to a pull request that adds an entry to `registry/devices.json`.
 
+## AI setup (optional)
+
+1. Show settings, then enter a key for one provider, or put it in `~/Documents/decky-import/tuning-advisor.json` and press Import keys from file:
+
+```json
+{ "anthropic_api_key": "your key", "ai_provider": "anthropic" }
+```
+
+The key names are `openai_api_key`, `anthropic_api_key` and `gemini_api_key`. Delete the file when asked.
+
+2. In AI recommendation, pick the provider, press Load model list, pick a model, then Generate AI recommendation.
+
+Use a dedicated key with a spending limit. Set a daily request limit in settings if you want one.
+
 ## Data and privacy
 
 - Device facts come from `/sys/class/dmi/id/`, `/proc/cpuinfo` and `/etc/os-release`. Serial numbers and UUIDs are never read.
 - Your current launch options and compatibility tool are read from the Steam client to show and merge. They stay on the device and are never changed.
 - Tools are detected by reading other plugins' `plugin.json` files and checking whether some files exist. Nothing is written to them.
+- AI requests, only when you press Generate, send the game name, app ID, device profile, your selected tools and short report excerpts to the provider you picked. No host names, user identifiers or other keys.
 - The game's Steam app ID is sent to deckverified.games. Non-Steam games are looked up by name. Replies are cached for 7 days and shown, marked as cached, when you are offline. Turn the source off in settings.
 - Once a day it checks GitHub for a newer release. Turn that off in settings.
 

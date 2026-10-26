@@ -1,0 +1,27 @@
+{
+  "_note": "Shaped from the provider's documented response format, not recorded from a live call.",
+  "models": [
+    {
+      "name": "models/gemini-3.8-flash",
+      "displayName": "Gemini 3.8 Flash",
+      "supportedGenerationMethods": [
+        "generateContent",
+        "countTokens"
+      ]
+    },
+    {
+      "name": "models/text-embedding-005",
+      "displayName": "Embedding",
+      "supportedGenerationMethods": [
+        "embedContent"
+      ]
+    },
+    {
+      "name": "models/imagen-5",
+      "displayName": "Imagen",
+      "supportedGenerationMethods": [
+        "predict"
+      ]
+    }
+  ]
+}

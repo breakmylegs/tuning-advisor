@@ -1,6 +1,7 @@
 import { callable, definePlugin } from "@decky/api";
 import {
   ButtonItem,
+  ConfirmModal,
   DropdownItem,
   Field,
   Focusable,
@@ -8,7 +9,9 @@ import {
   Navigation,
   PanelSection,
   PanelSectionRow,
+  TextField,
   ToggleField,
+  showModal,
   staticClasses,
 } from "@decky/ui";
 import { useEffect, useState } from "react";
@@ -17,8 +20,12 @@ import { UpdateBadge } from "./shared/UpdateBadge";
 import { useBackendEvent } from "./shared/useBackendEvent";
 import { copyText } from "./clipboard";
 import { currentCompat, recentGames, runningGame, watchGames, type GameRef } from "./game";
-import type { AdvisorSettings, CompatSection, View, Workload } from "./types";
+import type { AdvisorSettings, AiProviderView, CompatSection, View, Workload } from "./types";
 import {
+  SECRET_FOR,
+  aiPrivacyLine,
+  aiStatus,
+  capLine,
   CATEGORY_LABELS,
   cycleLabel,
   deviceLine,
@@ -49,6 +56,17 @@ const refresh = callable<[], Wrapped>("refresh");
 const redetect = callable<[], Wrapped>("redetect");
 const saveSettings = callable<[values: Partial<AdvisorSettings>], Wrapped>("save_settings");
 const clearCache = callable<[], { ok: boolean; removed: number }>("clear_cache");
+const setSecret = callable<[name: string, value: string], Wrapped>("set_secret");
+const clearSecret = callable<[name: string], Wrapped>("clear_secret");
+const listModels = callable<
+  [provider: string],
+  { ok: boolean; models?: { id: string; label: string }[]; error?: { message: string } }
+>("list_models");
+const generateAi = callable<[], Wrapped>("generate_ai");
+const importFromFile = callable<[], { ok: boolean; message?: string; imported?: string[]; path: string; view?: View }>(
+  "import_from_file",
+);
+const deleteImportFile = callable<[], { ok: boolean; message?: string }>("delete_import_file");
 
 const note: React.CSSProperties = { fontSize: 12, lineHeight: 1.35 };
 const warn: React.CSSProperties = { ...note, padding: "6px 8px", borderRadius: 4, background: "#4f3a1f" };
@@ -255,6 +273,223 @@ function CompatCard({ section }: { section: CompatSection }) {
   );
 }
 
+function AiCard({ view, apply }: { view: View; apply: (v: View | undefined) => void }) {
+  const [models, setModels] = useState<{ id: string; label: string }[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const providerId = view.settings.ai_provider;
+  const provider = view.ai.providers.find((p) => p.id === providerId);
+  const result = view.ai.result;
+  const save = async (values: Partial<AdvisorSettings>) => apply((await saveSettings(values)).view);
+
+  const load = async () => {
+    setMessage("");
+    const res = await listModels(providerId);
+    if (res.ok) {
+      setModels(res.models ?? []);
+      if (!res.models?.length) setMessage("No text models found for this key.");
+    } else setMessage(res.error?.message ?? "Could not load models.");
+  };
+
+  const modelOptions = models.length
+    ? models.map((m) => ({ data: m.id, label: m.label }))
+    : view.settings.ai_model
+      ? [{ data: view.settings.ai_model, label: view.settings.ai_model }]
+      : [];
+
+  return (
+    <PanelSection title="AI recommendation (optional)">
+      <PanelSectionRow>
+        <DropdownItem
+          label="Provider"
+          rgOptions={[{ data: "", label: "Off" }, ...view.ai.providers.map((p) => ({ data: p.id, label: p.name }))]}
+          selectedOption={providerId}
+          onChange={(o) => {
+            setModels([]);
+            save({ ai_provider: o.data as AdvisorSettings["ai_provider"] });
+          }}
+        />
+      </PanelSectionRow>
+      {provider && !provider.key.set && (
+        <PanelSectionRow>
+          <div style={note}>Add your {provider.name} API key in settings below first.</div>
+        </PanelSectionRow>
+      )}
+      {provider && provider.key.set && (
+        <>
+          <PanelSectionRow>
+            <ButtonItem layout="below" onClick={load}>
+              Load model list
+            </ButtonItem>
+          </PanelSectionRow>
+          {modelOptions.length > 0 && (
+            <PanelSectionRow>
+              <DropdownItem
+                label="Model"
+                rgOptions={modelOptions}
+                selectedOption={view.settings.ai_model || null}
+                strDefaultLabel="Choose a model"
+                onChange={(o) => save({ ai_model: o.data as string })}
+              />
+            </PanelSectionRow>
+          )}
+          <PanelSectionRow>
+            <ButtonItem
+              layout="below"
+              disabled={busy || !view.settings.ai_model || !view.game}
+              description={<span style={note}>{aiPrivacyLine(provider.name)}</span>}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  apply((await generateAi()).view);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {busy ? "Generating..." : "Generate AI recommendation"}
+            </ButtonItem>
+          </PanelSectionRow>
+          <PanelSectionRow>
+            <div style={note}>{capLine(view.ai.used_today, view.settings.ai_daily_cap)}</div>
+          </PanelSectionRow>
+        </>
+      )}
+      {message && (
+        <PanelSectionRow>
+          <div style={note}>{message}</div>
+        </PanelSectionRow>
+      )}
+      {result && (
+        <PanelSectionRow>
+          <div style={result.error ? warn : { ...warn, background: "#2a3a4f" }}>{aiStatus(result)}</div>
+        </PanelSectionRow>
+      )}
+      {result?.rec &&
+        groups(result.rec).map((g) => (
+          <PanelSectionRow key={g.title}>
+            <Field focusable bottomSeparator="none" label={g.title}>
+              <div style={note}>
+                {g.lines.map((line, i) => (
+                  <div key={i}>{line}</div>
+                ))}
+              </div>
+            </Field>
+          </PanelSectionRow>
+        ))}
+      {result?.rec && (result.rec.flags.length > 0 || result.discarded.length > 0) && (
+        <PanelSectionRow>
+          <div style={warn}>
+            {result.rec.flags.map((f, i) => (
+              <div key={`f${i}`}>{f}</div>
+            ))}
+            {result.discarded.length > 0 && <div>Discarded from the reply:</div>}
+            {result.discarded.map((d, i) => (
+              <div key={`d${i}`}>{d}</div>
+            ))}
+          </div>
+        </PanelSectionRow>
+      )}
+      {result?.rec?.notes && (
+        <PanelSectionRow>
+          <Field focusable bottomSeparator="none" label="Model notes">
+            <div style={note}>{result.rec.notes}</div>
+          </Field>
+        </PanelSectionRow>
+      )}
+      {result?.rec?.compat_section && <CompatCard section={result.rec.compat_section} />}
+    </PanelSection>
+  );
+}
+
+function KeyRow({ provider, apply }: { provider: AiProviderView; apply: (v: View | undefined) => void }) {
+  const [value, setValue] = useState("");
+  const name = SECRET_FOR[provider.id];
+  return (
+    <>
+      <PanelSectionRow>
+        <TextField
+          label={`${provider.name} API key`}
+          description={
+            <span style={note}>
+              {provider.key.set ? `Stored (${provider.key.masked}).` : "Not set."} Use a dedicated key with a spending limit.
+            </span>
+          }
+          bIsPassword
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+      </PanelSectionRow>
+      <PanelSectionRow>
+        <ButtonItem
+          layout="below"
+          disabled={!value}
+          onClick={async () => {
+            apply((await setSecret(name, value)).view);
+            setValue("");
+          }}
+        >
+          Save {provider.name} key
+        </ButtonItem>
+      </PanelSectionRow>
+      {provider.key.set && (
+        <PanelSectionRow>
+          <ButtonItem layout="below" onClick={async () => apply((await clearSecret(name)).view)}>
+            Clear {provider.name} key
+          </ButtonItem>
+        </PanelSectionRow>
+      )}
+    </>
+  );
+}
+
+function AiSettings({ view, apply }: { view: View; apply: (v: View | undefined) => void }) {
+  const [message, setMessage] = useState("");
+  const importKeys = async () => {
+    const res = await importFromFile();
+    if (!res.ok) {
+      setMessage(res.message ?? "Import failed.");
+      return;
+    }
+    apply(res.view);
+    setMessage(`Imported ${res.imported?.join(", ")}.`);
+    showModal(
+      <ConfirmModal
+        strTitle="Delete the import file?"
+        strDescription={`The file at ${res.path} still holds your keys in plain text. Delete it now.`}
+        strOKButtonText="Delete file"
+        strCancelButtonText="Keep it"
+        onOK={async () => setMessage((await deleteImportFile()).message ?? "")}
+      />,
+    );
+  };
+  return (
+    <>
+      {view.ai.providers.map((p) => (
+        <KeyRow key={p.id} provider={p} apply={apply} />
+      ))}
+      <PanelSectionRow>
+        <ButtonItem layout="below" onClick={importKeys} description={<span style={note}>Reads {view.import_path}</span>}>
+          Import keys from file
+        </ButtonItem>
+      </PanelSectionRow>
+      <PanelSectionRow>
+        <DropdownItem
+          label="Daily AI request limit"
+          rgOptions={[0, 5, 10, 20, 50].map((n) => ({ data: n, label: n === 0 ? "No limit" : `${n} a day` }))}
+          selectedOption={view.settings.ai_daily_cap}
+          onChange={async (o) => apply((await saveSettings({ ai_daily_cap: o.data as number })).view)}
+        />
+      </PanelSectionRow>
+      {message && (
+        <PanelSectionRow>
+          <div style={note}>{message}</div>
+        </PanelSectionRow>
+      )}
+    </>
+  );
+}
+
 function SettingsSection({ view, apply }: { view: View; apply: (v: View | undefined) => void }) {
   const [message, setMessage] = useState("");
   const save = async (values: Partial<AdvisorSettings>) => {
@@ -307,6 +542,7 @@ function SettingsSection({ view, apply }: { view: View; apply: (v: View | undefi
           Clear cache
         </ButtonItem>
       </PanelSectionRow>
+      <AiSettings view={view} apply={apply} />
       <PanelSectionRow>
         <ToggleField label="Check for updates daily" checked={view.settings.update_check} onChange={(v) => save({ update_check: v })} />
       </PanelSectionRow>
@@ -452,6 +688,8 @@ function Content() {
       {view.recommendations[index]?.compat_section && (
         <CompatCard section={view.recommendations[index].compat_section as CompatSection} />
       )}
+
+      {view.game && <AiCard view={view} apply={apply} />}
 
       {view.game && (
         <PanelSection title="More about this game">

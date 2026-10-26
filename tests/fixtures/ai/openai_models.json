@@ -1,0 +1,26 @@
+{
+  "_note": "Shaped from the provider's documented response format, not recorded from a live call.",
+  "object": "list",
+  "data": [
+    {
+      "id": "gpt-6-astra",
+      "object": "model"
+    },
+    {
+      "id": "text-embedding-4",
+      "object": "model"
+    },
+    {
+      "id": "gpt-6-mini",
+      "object": "model"
+    },
+    {
+      "id": "whisper-2",
+      "object": "model"
+    },
+    {
+      "id": "dall-e-4",
+      "object": "model"
+    }
+  ]
+}

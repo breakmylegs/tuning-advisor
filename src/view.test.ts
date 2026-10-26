@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 import type { Recommendation, View } from "./types";
-import { cycleLabel, deviceLine, gameTitle, groups, linkOuts, matchNote, protonLine, shortDate, sourceLine, stackSummary } from "./view";
+import {
+  aiPrivacyLine,
+  aiStatus,
+  capLine,
+  cycleLabel,
+  deviceLine,
+  gameTitle,
+  groups,
+  linkOuts,
+  matchNote,
+  protonLine,
+  shortDate,
+  sourceLine,
+  stackSummary,
+} from "./view";
 
 const rec: Recommendation = {
   source: "deckverified",
@@ -85,5 +99,25 @@ describe("advisor view", () => {
     expect(protonLine({ ...base, recommended: "GE-Proton10-20", current: "Steam's default", matches: false })).toBe(
       "GE-Proton10-20. You use Steam's default.",
     );
+  });
+
+  it("labels AI output and the daily cap", () => {
+    const base = {
+      label: "AI generated, unverified",
+      provider: "anthropic",
+      model: "m1",
+      cached: false,
+      rec: null,
+      discarded: [],
+      error: null,
+      generated_at: 1,
+    };
+    expect(aiStatus(base)).toBe("AI generated, unverified. Just now, m1.");
+    expect(aiStatus({ ...base, cached: true })).toBe("AI generated, unverified. From cache, m1.");
+    expect(aiStatus({ ...base, error: { kind: "auth", message: "Add your key." } })).toBe("Add your key.");
+    expect(aiStatus(null)).toBe("");
+    expect(capLine(2, 5)).toBe("2 of 5 AI requests used today.");
+    expect(capLine(3, 0)).toBe("3 AI requests today. No daily limit.");
+    expect(aiPrivacyLine("OpenAI")).toContain("to OpenAI. Nothing else.");
   });
 });

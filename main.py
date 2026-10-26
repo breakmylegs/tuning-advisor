@@ -70,6 +70,34 @@ class Plugin:
         except ValueError as err:
             return {"ok": False, "message": str(err)}
 
+    async def set_secret(self, name, value):
+        try:
+            return {"ok": True, "view": self.service.set_secret(name, value)}
+        except ValueError as err:
+            return {"ok": False, "message": str(err)}
+
+    async def clear_secret(self, name):
+        try:
+            return {"ok": True, "view": self.service.clear_secret(name)}
+        except ValueError as err:
+            return {"ok": False, "message": str(err)}
+
+    async def list_models(self, provider):
+        return await self.service.list_models(provider)
+
+    async def generate_ai(self):
+        """Only ever called by the Generate button. Output is display only."""
+        try:
+            return {"ok": True, "view": await self.service.generate_ai()}
+        except Exception as exc:  # noqa: BLE001
+            return error_result(exc)
+
+    async def import_from_file(self):
+        return self.service.import_from_file()
+
+    async def delete_import_file(self):
+        return self.service.delete_import_file()
+
     async def clear_cache(self):
         return self.service.clear_cache()
 
