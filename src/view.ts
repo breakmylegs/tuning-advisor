@@ -1,5 +1,5 @@
 // Pure display logic for the advisor panel. Tested with vitest.
-import type { AiResult, Game, PcgwData, ProtonDbState, ProtonSection, Recommendation, View } from "./types";
+import type { AiResult, CurrentValues, Game, PcgwData, ProtonDbState, ProtonSection, Recommendation, View } from "./types";
 
 export const MATCH_LABELS: Record<string, string> = {
   exact: "your device",
@@ -166,4 +166,34 @@ export function pcgwLines(data: PcgwData): { title: string; lines: string[] }[] 
   const files = data.files.map((f) => `${f.type || "Files"} (${f.platform || "any"}): ${f.paths.join("  or  ")}`);
   if (files.length) groups.push({ title: "Config and save files", lines: files });
   return groups.filter((g) => g.lines.length > 0);
+}
+
+export function currentLines(current: CurrentValues, rec: Recommendation, names: Record<string, string>): string[] {
+  const lines: string[] = [];
+  const power = current.power;
+  if (power) {
+    const tool = names[power.tool] ?? power.tool;
+    if (power.tdp_w === null) {
+      lines.push(power.note ?? `${tool} has no TDP limit set.`);
+    } else {
+      const preset = power.preset ? ` (${power.preset})` : "";
+      const want = rec.power.tdp_w;
+      const compare =
+        want === null ? "" : want === power.tdp_w ? " That matches." : ` The recommendation is ${want} W.`;
+      lines.push(`${tool}, ${power.scope}: ${power.tdp_w} W${preset}.${compare}`);
+      if (power.note) lines.push(power.note);
+    }
+  }
+  const fg = current.framegen;
+  if (fg) {
+    const tool = names[fg.tool] ?? fg.tool;
+    if (!fg.profile) {
+      if (rec.frame_gen.tool === fg.tool) lines.push(`${tool} has no profile for this game yet.`);
+    } else {
+      const parts = [fg.multiplier ? `${fg.multiplier}x` : null, fg.flow_scale !== null ? `flow scale ${fg.flow_scale}` : null];
+      if (fg.performance_mode) parts.push("performance mode");
+      lines.push(`${tool} profile "${fg.profile}": ${parts.filter(Boolean).join(", ")}.`);
+    }
+  }
+  return lines;
 }

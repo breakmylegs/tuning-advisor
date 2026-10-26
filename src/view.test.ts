@@ -4,6 +4,7 @@ import {
   aiPrivacyLine,
   aiStatus,
   capLine,
+  currentLines,
   cycleLabel,
   deviceLine,
   gameTitle,
@@ -156,5 +157,25 @@ describe("advisor view", () => {
       { title: "Graphics options", lines: ["Upscalers: DLSS, FSR 3.1", "Supports HDR"] },
       { title: "Config and save files", lines: ["config (Windows): a  or  b"] },
     ]);
+  });
+
+  it("compares current tool values with the recommendation", () => {
+    const names = { legotdp: "LeGoTDP", "lsfg-vk": "Decky LSFG-VK" };
+    const power = { tool: "legotdp", tdp_w: 18, scope: "this game's profile", preset: "Balanced", note: null };
+    expect(currentLines({ power, framegen: null }, rec, names)).toEqual([
+      "LeGoTDP, this game's profile: 18 W (Balanced). The recommendation is 15 W.",
+    ]);
+    expect(currentLines({ power: { ...power, tdp_w: 15, preset: null }, framegen: null }, rec, names)).toEqual([
+      "LeGoTDP, this game's profile: 15 W. That matches.",
+    ]);
+    const fg = { tool: "lsfg-vk", profile: "Cyberpunk", multiplier: 3, flow_scale: 0.75, performance_mode: true };
+    expect(currentLines({ power: null, framegen: fg }, rec, names)).toEqual([
+      'Decky LSFG-VK profile "Cyberpunk": 3x, flow scale 0.75, performance mode.',
+    ]);
+    const none = { ...fg, profile: null, multiplier: null, flow_scale: null, performance_mode: null };
+    expect(currentLines({ power: null, framegen: none }, { ...rec, frame_gen: { tool: "lsfg-vk", mode: null } }, names)).toEqual([
+      "Decky LSFG-VK has no profile for this game yet.",
+    ]);
+    expect(currentLines({ power: null, framegen: null }, rec, names)).toEqual([]);
   });
 });

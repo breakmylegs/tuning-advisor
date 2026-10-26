@@ -34,6 +34,17 @@ export interface PcgwData {
   attribution: string;
 }
 
+export interface CurrentValues {
+  power: { tool: string; tdp_w: number | null; scope: string; preset?: string | null; note: string | null } | null;
+  framegen: {
+    tool: string;
+    profile: string | null;
+    multiplier: number | null;
+    flow_scale: number | null;
+    performance_mode: boolean | null;
+  } | null;
+}
+
 export interface PcgwState {
   enabled: boolean;
   error: { kind: string; message: string } | null;
@@ -142,6 +153,7 @@ export interface View {
   conflicts: { kind: string; text: string }[];
   game: Game | null;
   source: { cached: boolean; error: { message: string } | null; fetched_at: number | null; enabled: boolean };
+  current: CurrentValues;
   protondb: ProtonDbState;
   pcgw: PcgwState;
   recommendations: Recommendation[];

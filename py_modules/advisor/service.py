@@ -18,7 +18,7 @@ from plugin_core.secrets import SecretStore, import_path, read_import_file
 from plugin_core.settings import JsonStore
 from plugin_core.update_check import UpdateChecker, load_build_info
 
-from . import compat, deckverified, device as devmod, pcgw, protondb, recommend, registry as regmod, stack as stackmod
+from . import compat, current, deckverified, device as devmod, pcgw, protondb, recommend, registry as regmod, stack as stackmod
 from .ai import PROVIDERS, SECRET_NAMES
 from .ai.runner import AiRunner
 from .cache import SourceCache
@@ -243,6 +243,12 @@ class AdvisorService:
         self.source_state["cached"] = from_cache
         self.source_state["fetched_at"] = stored_at
 
+    def current_values(self, selected: dict[str, str]) -> dict[str, Any]:
+        """What the user's own tools are set to for this game. Read only."""
+        game = self.game or {}
+        appid = game.get("appid") or game.get("shortcut_appid")
+        return current.read(selected, self.detected, self.decky_home, self.user_home, appid)
+
     def set_current_compat(self, launch_options: str = "", compat_tool: str = "") -> None:
         self.current_compat = {"launch_options": compat.clean(launch_options), "compat_tool": compat.clean(compat_tool)}
 
@@ -288,6 +294,7 @@ class AdvisorService:
             "conflicts": stackmod.conflicts(self.registry, self.detected, self.device),
             "game": self.game,
             "source": self.source_state,
+            "current": self.current_values(selected),
             "protondb": self.pdb_state,
             "pcgw": dict(self.pcgw_state, data=self.pcgw_data, has_password=self.secrets.has(PCGW_SECRET)),
             "recommendations": self.recommendations() if self.game else [recommend.fallback(self.device, self.settings.get("workload"))],

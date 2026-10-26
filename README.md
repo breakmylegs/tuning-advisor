@@ -15,6 +15,7 @@ A Decky Loader plugin. It detects your game, handheld and tuning tools, then rec
 - Keeps your own launch option wrappers, such as `~/lsfg %command%`, in a combined suggestion and explains each change.
 - Flags launch options that run a command before the game or use shell operators. Never runs or applies any of them.
 - Copy to clipboard where Game Mode allows it. If it does not, the text stays on screen to type.
+- Shows what your own tools are set to for this game, next to the recommendation: SimpleDeckyTDP, PowerControl, LeGoTDP and Legion Go 2 Companion TDP, and your Decky LSFG-VK profile. Read only.
 - Optional ProtonDB reports from handhelds, from a monthly index of ProtonDB's open data. Adds Proton versions, launch options and notes, with the share of reports that say the game works.
 - Optional PCGamingWiki details with your own bot password: which upscalers and frame generation the game supports, and where it keeps config and save files. Flags a recommended upscaler the game does not list.
 - Optional AI recommendation with your own OpenAI, Anthropic or Google Gemini API key. Off until you set it up, and sent only when you press Generate. The reply is labelled "AI generated, unverified", shown next to the community reports, checked against your device, and never applied. Anything out of range is discarded and listed.
@@ -57,7 +58,7 @@ Use a dedicated key with a spending limit. Set a daily request limit in settings
 
 - Device facts come from `/sys/class/dmi/id/`, `/proc/cpuinfo` and `/etc/os-release`. Serial numbers and UUIDs are never read.
 - Your current launch options and compatibility tool are read from the Steam client to show and merge. They stay on the device and are never changed.
-- Tools are detected by reading other plugins' `plugin.json` files and checking whether some files exist. Nothing is written to them.
+- Tools are detected by reading other plugins' `plugin.json` files and checking whether some files exist. Their settings files are read to show your current values. Nothing is written to them.
 - AI requests, only when you press Generate, send the game name, app ID, device profile, your selected tools and short report excerpts to the provider you picked. No host names, user identifiers or other keys.
 - The game's Steam app ID is sent to deckverified.games. Non-Steam games are looked up by name. Replies are cached for 7 days and shown, marked as cached, when you are offline. Turn the source off in settings.
 - Once a day it checks GitHub for a newer release. Turn that off in settings.

@@ -26,6 +26,7 @@ import {
   aiPrivacyLine,
   aiStatus,
   capLine,
+  currentLines,
   pcgwLines,
   protondbLine,
   CATEGORY_LABELS,
@@ -138,6 +139,18 @@ function RecommendationCard({
               <div key={i}>{f}</div>
             ))}
           </div>
+        </PanelSectionRow>
+      )}
+      {currentLines(view.current, rec, view.stack.names).length > 0 && (
+        <PanelSectionRow>
+          <Field focusable bottomSeparator="none" label="Your current settings">
+            <div style={note}>
+              {currentLines(view.current, rec, view.stack.names).map((line, i) => (
+                <div key={i}>{line}</div>
+              ))}
+              <div style={{ marginTop: 2 }}>Read from your tools. Nothing is changed.</div>
+            </div>
+          </Field>
         </PanelSectionRow>
       )}
       {rec.source !== "fallback" && (rec.report_title || rec.notes) && (

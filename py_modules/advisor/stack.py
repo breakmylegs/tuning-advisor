@@ -23,7 +23,8 @@ def normalise(name: str) -> str:
 
 
 def installed_plugins(decky_home: str) -> dict[str, dict[str, Any]]:
-    """{normalised name: {"name", "disabled"}} for every installed plugin."""
+    """{normalised name: {"name", "disabled", "folder"}} for every installed plugin.
+    The folder name is also the plugin's settings folder under <DECKY_HOME>/settings."""
     disabled: set[str] = set()
     try:
         with open(os.path.join(decky_home, "settings", "loader.json"), encoding="utf-8") as handle:
@@ -40,7 +41,8 @@ def installed_plugins(decky_home: str) -> dict[str, dict[str, Any]]:
             continue
         if isinstance(name, str) and name.strip():
             key = normalise(name)
-            out[key] = {"name": name, "disabled": key in disabled}
+            out[key] = {"name": name, "disabled": key in disabled,
+                        "folder": os.path.basename(os.path.dirname(manifest))}
     return out
 
 
@@ -82,11 +84,13 @@ def detect(registry: Registry, decky_home: str, user_home: str, user: str, devic
         rules = tool.get("detect") or {}
         hit = False
         disabled = False
+        folder = None
         for name in rules.get("plugin_names") or []:
             entry = plugins.get(normalise(name))
             if entry:
                 hit = True
                 disabled = entry["disabled"]
+                folder = entry["folder"]
                 break
         if not hit:
             for path in rules.get("paths") or []:
@@ -97,7 +101,7 @@ def detect(registry: Registry, decky_home: str, user_home: str, user: str, devic
             hit = False
         if hit and not disabled:
             extra = [p for p in rules.get("home_paths") or [] if os.path.exists(os.path.join(user_home, p))]
-            found.append({"id": tool["id"], "home_paths_found": extra})
+            found.append({"id": tool["id"], "home_paths_found": extra, "folder": folder})
         elif hit and disabled:
             found.append({"id": tool["id"], "disabled": True})
     return {"tools": found, "os": read_os(root)}
