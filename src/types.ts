@@ -9,6 +9,32 @@ export interface AdvisorSettings {
   remove_data_on_uninstall: boolean;
 }
 
+export interface LaunchSection {
+  recommended: string;
+  current: string;
+  where: string;
+  flags: string[];
+  merged: string | null;
+  merge_notes: string[];
+  same_as_current: boolean;
+}
+
+export interface ProtonSection {
+  recommended: string;
+  force: boolean;
+  build: string | null;
+  install_note: string | null;
+  current: string;
+  matches: boolean;
+  where: string;
+  as_reported: string;
+}
+
+export interface CompatSection {
+  proton: ProtonSection | null;
+  launch: LaunchSection | null;
+}
+
 export interface Recommendation {
   source: "deckverified" | "protondb" | "pcgw" | "fallback" | "ai";
   source_url: string;
@@ -25,7 +51,8 @@ export interface Recommendation {
   upscaler: { name: string | null; mode: string | null };
   frame_gen: { tool: string | null; mode: string | null; requires?: string };
   in_game: { preset: string | null; settings: { name: string; value: string }[] };
-  compat: { proton: string | null; launch_options: string | null };
+  compat: { proton: string | null; tool: string | null; tool_version: string | null; launch_options: string | null };
+  compat_section?: CompatSection | null;
   rating?: string | null;
   target_fps?: string | null;
   notes: string;

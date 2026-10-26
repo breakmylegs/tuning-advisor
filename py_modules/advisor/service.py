@@ -17,7 +17,7 @@ from plugin_core.http import fetch_json
 from plugin_core.settings import JsonStore
 from plugin_core.update_check import UpdateChecker, load_build_info
 
-from . import deckverified, device as devmod, recommend, registry as regmod, stack as stackmod
+from . import compat, deckverified, device as devmod, recommend, registry as regmod, stack as stackmod
 from .cache import SourceCache
 
 Emit = Callable[..., Awaitable[None]]
@@ -60,6 +60,8 @@ class AdvisorService:
         self.device_how = "generic"
         self.detected: dict[str, Any] = {"tools": [], "os": {"id": "other", "pretty": "", "version": ""}}
         self.game: dict[str, Any] | None = None
+        # Read from the Steam client by the frontend, for display and merging only.
+        self.current_compat: dict[str, str] = {"launch_options": "", "compat_tool": ""}
         self.reports: list[dict[str, Any]] = []
         self.source_state: dict[str, Any] = {"cached": False, "error": None, "fetched_at": None, "enabled": True}
         self._lock = asyncio.Lock()
@@ -111,8 +113,10 @@ class AdvisorService:
 
     # Game and reports
 
-    async def set_game(self, appid: int | None, name: str, build_id: int | None = None, shortcut: bool = False) -> dict[str, Any]:
+    async def set_game(self, appid: int | None, name: str, build_id: int | None = None, shortcut: bool = False,
+                       launch_options: str = "", compat_tool: str = "") -> dict[str, Any]:
         appid = int(appid) if appid else None
+        self.set_current_compat(launch_options, compat_tool)
         if appid and appid >= SHORTCUT_APPID_MIN:
             shortcut = True
         self.game = {"appid": None if shortcut else appid, "shortcut_appid": appid if shortcut else None,
@@ -161,10 +165,16 @@ class AdvisorService:
         self.source_state["cached"] = from_cache
         self.source_state["fetched_at"] = stored_at
 
+    def set_current_compat(self, launch_options: str = "", compat_tool: str = "") -> None:
+        self.current_compat = {"launch_options": compat.clean(launch_options), "compat_tool": compat.clean(compat_tool)}
+
     def recommendations(self) -> list[dict[str, Any]]:
         low = bool(self.game and self.game.get("shortcut"))
-        return recommend.build(self.reports, self.registry, self.device, self.selected(),
-                               self.settings.get("workload"), low)
+        selected = self.selected()
+        recs = recommend.build(self.reports, self.registry, self.device, selected, self.settings.get("workload"), low)
+        for rec in recs:
+            rec["compat_section"] = compat.section(rec, self.current_compat, selected, low)
+        return recs
 
     # Frontend API
 

@@ -11,6 +11,10 @@ A Decky Loader plugin. It detects your game, handheld and tuning tools, then rec
 - Checks every recommendation against your device: clamps TDP to its range, drops refresh rates the screen cannot show, and flags frame caps that will stutter.
 - Never recommends FSR 4, which is not officially available on handheld chips under Proton.
 - Falls back to general guidance for light, medium or heavy games when there is no report.
+- Shows the Proton version and launch options from each report, by the exact name Steam uses, and where to set them. Shows your current values next to them.
+- Keeps your own launch option wrappers, such as `~/lsfg %command%`, in a combined suggestion and explains each change.
+- Flags launch options that run a command before the game or use shell operators. Never runs or applies any of them.
+- Copy to clipboard where Game Mode allows it. If it does not, the text stays on screen to type.
 
 Issues and source: [breakmylegs/decky-plugins](https://github.com/breakmylegs/decky-plugins).
 
@@ -28,6 +32,7 @@ Any other handheld gets a generic profile. To add one, run `tools/capture_device
 ## Data and privacy
 
 - Device facts come from `/sys/class/dmi/id/`, `/proc/cpuinfo` and `/etc/os-release`. Serial numbers and UUIDs are never read.
+- Your current launch options and compatibility tool are read from the Steam client to show and merge. They stay on the device and are never changed.
 - Tools are detected by reading other plugins' `plugin.json` files and checking whether some files exist. Nothing is written to them.
 - The game's Steam app ID is sent to deckverified.games. Non-Steam games are looked up by name. Replies are cached for 7 days and shown, marked as cached, when you are offline. Turn the source off in settings.
 - Once a day it checks GitHub for a newer release. Turn that off in settings.

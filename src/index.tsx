@@ -15,8 +15,9 @@ import { useEffect, useState } from "react";
 import { FaSlidersH } from "react-icons/fa";
 import { UpdateBadge } from "./shared/UpdateBadge";
 import { useBackendEvent } from "./shared/useBackendEvent";
-import { recentGames, runningGame, watchGames, type GameRef } from "./game";
-import type { AdvisorSettings, View, Workload } from "./types";
+import { copyText } from "./clipboard";
+import { currentCompat, recentGames, runningGame, watchGames, type GameRef } from "./game";
+import type { AdvisorSettings, CompatSection, View, Workload } from "./types";
 import {
   CATEGORY_LABELS,
   cycleLabel,
@@ -26,6 +27,7 @@ import {
   linkOuts,
   matchNote,
   optionLabel,
+  protonLine,
   sourceLine,
   stackSummary,
 } from "./view";
@@ -33,7 +35,16 @@ import {
 type Wrapped = { ok: boolean; view?: View; message?: string; error?: { message: string } };
 
 const getView = callable<[], View>("get_view");
-const setGame = callable<[appid: number, name: string, buildId: number | null, shortcut: boolean], Wrapped>("set_game");
+const setGame = callable<
+  [appid: number, name: string, buildId: number | null, shortcut: boolean, launchOptions: string, compatTool: string],
+  Wrapped
+>("set_game");
+const setCurrentCompat = callable<[launchOptions: string, compatTool: string], Wrapped>("set_current_compat");
+
+async function sendGame(game: GameRef): Promise<Wrapped> {
+  const current = await currentCompat(game.appid, game.shortcut);
+  return setGame(game.appid, game.name, game.buildId, game.shortcut, current.launchOptions, current.compatTool);
+}
 const refresh = callable<[], Wrapped>("refresh");
 const redetect = callable<[], Wrapped>("redetect");
 const saveSettings = callable<[values: Partial<AdvisorSettings>], Wrapped>("save_settings");
@@ -150,6 +161,100 @@ function RecommendationCard({
   );
 }
 
+const mono: React.CSSProperties = {
+  fontFamily: "monospace",
+  fontSize: 12,
+  wordBreak: "break-all",
+  padding: "4px 6px",
+  borderRadius: 4,
+  background: "rgba(255,255,255,0.06)",
+};
+
+function CopyButton({ text, label }: { text: string; label: string }) {
+  const [result, setResult] = useState("");
+  return (
+    <PanelSectionRow>
+      <ButtonItem
+        layout="below"
+        description={result ? <span style={note}>{result}</span> : undefined}
+        onClick={async () =>
+          setResult((await copyText(text)) ? "Copied." : "Copy did not work in Game Mode. Type the text shown above.")
+        }
+      >
+        {label}
+      </ButtonItem>
+    </PanelSectionRow>
+  );
+}
+
+function CompatCard({ section }: { section: CompatSection }) {
+  const { proton, launch } = section;
+  return (
+    <PanelSection title="Compatibility">
+      <PanelSectionRow>
+        <div style={note}>Recommend only. Nothing is applied. Set these yourself in Steam.</div>
+      </PanelSectionRow>
+      {proton && (
+        <PanelSectionRow>
+          <Field focusable bottomSeparator="none" label="Proton">
+            <div style={note}>
+              <div>{protonLine(proton)}</div>
+              {!proton.matches && <div>Where: {proton.where}.</div>}
+              {proton.install_note && <div>{proton.install_note}</div>}
+              {proton.as_reported && <div>As reported: {proton.as_reported}</div>}
+            </div>
+          </Field>
+        </PanelSectionRow>
+      )}
+      {launch && (
+        <>
+          <PanelSectionRow>
+            <Field focusable bottomSeparator="none" label="Launch options from the report">
+              <div style={note}>
+                <div style={mono}>{launch.recommended}</div>
+                <div style={{ marginTop: 4 }}>Where: {launch.where}.</div>
+                {launch.current && (
+                  <div style={{ marginTop: 4 }}>
+                    Yours now: <span style={mono}>{launch.current}</span>
+                  </div>
+                )}
+                {launch.same_as_current && <div>You already use these.</div>}
+              </div>
+            </Field>
+          </PanelSectionRow>
+          {launch.flags.length > 0 && (
+            <PanelSectionRow>
+              <div style={warn}>
+                {launch.flags.map((f, i) => (
+                  <div key={i}>{f}</div>
+                ))}
+              </div>
+            </PanelSectionRow>
+          )}
+          {!launch.same_as_current && <CopyButton text={launch.recommended} label="Copy launch options" />}
+          {launch.merged && (
+            <>
+              <PanelSectionRow>
+                <Field focusable bottomSeparator="none" label="Combined with yours">
+                  <div style={note}>
+                    <div style={mono}>{launch.merged}</div>
+                    {launch.merge_notes.map((n, i) => (
+                      <div key={i} style={{ marginTop: 2 }}>
+                        {n}
+                      </div>
+                    ))}
+                  </div>
+                </Field>
+              </PanelSectionRow>
+              <CopyButton text={launch.merged} label="Copy combined launch options" />
+            </>
+          )}
+        </>
+      )}
+    </PanelSection>
+  );
+}
+
 function SettingsSection({ view, apply }: { view: View; apply: (v: View | undefined) => void }) {
   const [message, setMessage] = useState("");
   const save = async (values: Partial<AdvisorSettings>) => {
@@ -256,7 +361,7 @@ function Content() {
   const pick = async (game: GameRef) => {
     setLoading(true);
     try {
-      const res = await setGame(game.appid, game.name, game.buildId, game.shortcut);
+      const res = await sendGame(game);
       apply(res.view);
       setIndex(0);
     } finally {
@@ -270,7 +375,13 @@ function Content() {
       setView(current);
       const playing = runningGame() ?? lastSeen;
       const known = current.game?.appid ?? current.game?.shortcut_appid;
-      if (playing && playing.appid !== known) await pick(playing);
+      if (playing && playing.appid !== known) {
+        await pick(playing);
+      } else if (known && current.game) {
+        // Launch options may have changed since the game was picked. Read them again.
+        const fresh = await currentCompat(known, current.game.shortcut);
+        apply((await setCurrentCompat(fresh.launchOptions, fresh.compatTool)).view);
+      }
       setRecent(recentGames());
     })();
   }, []);
@@ -338,6 +449,10 @@ function Content() {
 
       <RecommendationCard view={view} index={index} setIndex={setIndex} apply={apply} />
 
+      {view.recommendations[index]?.compat_section && (
+        <CompatCard section={view.recommendations[index].compat_section as CompatSection} />
+      )}
+
       {view.game && (
         <PanelSection title="More about this game">
           {linkOuts(view.game).map((l) => (
@@ -369,7 +484,7 @@ export default definePlugin(() => {
   const stopWatching = watchGames(
     (game) => {
       lastSeen = game;
-      setGame(game.appid, game.name, game.buildId, game.shortcut);
+      sendGame(game);
     },
     () => {
       lastSeen = null;

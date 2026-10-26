@@ -259,7 +259,7 @@ def fallback(device: dict[str, Any], workload: str) -> dict[str, Any]:
         "upscaler": {"name": None, "mode": None},
         "frame_gen": {"tool": None, "mode": None},
         "in_game": {"preset": None, "settings": []},
-        "compat": {"proton": None, "launch_options": None},
+        "compat": {"proton": None, "tool": None, "tool_version": None, "launch_options": None},
         "notes": "General guidance, not game-specific."
         + (" TDP bands are derived from the device's TDP range." if bands.get("derived") else ""),
     }

@@ -1,5 +1,5 @@
 // Pure display logic for the advisor panel. Tested with vitest.
-import type { Game, Recommendation, View } from "./types";
+import type { Game, ProtonSection, Recommendation, View } from "./types";
 
 export const MATCH_LABELS: Record<string, string> = {
   exact: "your device",
@@ -110,4 +110,10 @@ export function optionLabel(view: View, id: string): string {
   if (id === "auto") return "Detected";
   if (id === "none") return "None";
   return view.stack.names[id] ?? id;
+}
+
+export function protonLine(p: ProtonSection): string {
+  const status = p.matches ? "You already use this." : `You use ${p.current}.`;
+  const build = p.build ? ` The report used build ${p.build}.` : "";
+  return `${p.recommended}.${build} ${status}`;
 }

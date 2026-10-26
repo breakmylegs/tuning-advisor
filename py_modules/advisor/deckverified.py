@@ -165,7 +165,12 @@ def normalise(report: dict[str, Any]) -> dict[str, Any]:
         "upscaler": upscaler or {"name": None, "mode": None},
         "frame_gen": {"tool": frame_gen_from_launch(launch), "mode": None},
         "in_game": {"preset": preset, "settings": settings},
-        "compat": {"proton": " ".join(p for p in (tool, version) if p) or None, "launch_options": launch or None},
+        "compat": {
+            "proton": " ".join(p for p in (tool, version) if p) or None,
+            "tool": tool or None,
+            "tool_version": version or None,
+            "launch_options": launch or None,
+        },
         "rating": _text(data.get("performance_rating"), 30) or None,
         "target_fps": _text(data.get("target_framerate"), 30) or None,
         "os_version": _text(data.get("os_version"), 60) or None,

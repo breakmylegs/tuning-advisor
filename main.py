@@ -43,11 +43,17 @@ class Plugin:
     async def get_view(self):
         return self.service.view()
 
-    async def set_game(self, appid, name, build_id=None, shortcut=False):
+    async def set_game(self, appid, name, build_id=None, shortcut=False, launch_options="", compat_tool=""):
         try:
-            return {"ok": True, "view": await self.service.set_game(appid, name, build_id, shortcut)}
+            view = await self.service.set_game(appid, name, build_id, shortcut, launch_options or "", compat_tool or "")
+            return {"ok": True, "view": view}
         except Exception as exc:  # noqa: BLE001
             return error_result(exc)
+
+    async def set_current_compat(self, launch_options="", compat_tool=""):
+        """Current values read by the frontend. Shown and merged, never written back."""
+        self.service.set_current_compat(launch_options or "", compat_tool or "")
+        return {"ok": True, "view": self.service.view()}
 
     async def refresh(self):
         try:

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Recommendation, View } from "./types";
-import { cycleLabel, deviceLine, gameTitle, groups, linkOuts, matchNote, shortDate, sourceLine, stackSummary } from "./view";
+import { cycleLabel, deviceLine, gameTitle, groups, linkOuts, matchNote, protonLine, shortDate, sourceLine, stackSummary } from "./view";
 
 const rec: Recommendation = {
   source: "deckverified",
@@ -17,7 +17,7 @@ const rec: Recommendation = {
   upscaler: { name: null, mode: null },
   frame_gen: { tool: null, mode: null },
   in_game: { preset: "Custom", settings: [{ name: "Texture Quality", value: "High" }] },
-  compat: { proton: null, launch_options: null },
+  compat: { proton: null, tool: null, tool_version: null, launch_options: null },
   notes: "",
   flags: [],
   lines: {
@@ -75,5 +75,15 @@ describe("advisor view", () => {
     expect(cycleLabel(0, 1)).toBe("");
     expect(cycleLabel(1, 7)).toBe("Report 2 of 7");
     expect(shortDate("nonsense")).toBe("");
+  });
+
+  it("describes the Proton recommendation", () => {
+    const base = { force: true, build: null, install_note: null, where: "", as_reported: "" };
+    expect(protonLine({ ...base, recommended: "Proton 9.0", build: "9.0-3", current: "Proton 9.0-4", matches: true })).toBe(
+      "Proton 9.0. The report used build 9.0-3. You already use this.",
+    );
+    expect(protonLine({ ...base, recommended: "GE-Proton10-20", current: "Steam's default", matches: false })).toBe(
+      "GE-Proton10-20. You use Steam's default.",
+    );
   });
 });

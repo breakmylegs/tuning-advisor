@@ -27,6 +27,27 @@ export function describeApp(appid: number): GameRef | null {
   }
 }
 
+export interface CurrentCompat {
+  launchOptions: string;
+  compatTool: string;
+}
+
+// Read the game's current launch options and forced compatibility tool. Read
+// only: shown next to the recommendation and used to suggest a merge.
+export async function currentCompat(appid: number, shortcut: boolean): Promise<CurrentCompat> {
+  try {
+    const store = window.appDetailsStore;
+    const details = store?.GetAppDetails(appid) ?? (await store?.RequestAppDetails(appid)) ?? null;
+    if (!details) return { launchOptions: "", compatTool: "" };
+    return {
+      launchOptions: (shortcut ? details.strShortcutLaunchOptions : details.strLaunchOptions) || "",
+      compatTool: details.strCompatToolDisplayName || "",
+    };
+  } catch {
+    return { launchOptions: "", compatTool: "" };
+  }
+}
+
 export function runningGame(): GameRef | null {
   try {
     const app = Router.MainRunningApp;
