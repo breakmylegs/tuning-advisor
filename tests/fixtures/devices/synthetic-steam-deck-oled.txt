@@ -1,0 +1,19 @@
+# Synthetic. Built from verified DMI strings (VERIFICATION.md item 19).
+
+## dmi
+sys_vendor=Valve
+product_name=Galileo
+product_version=1
+board_name=Galileo
+board_vendor=Valve
+
+## cpu
+model_name=AMD Custom APU 0932
+threads=8
+
+## gpu
+card0 vendor=0x1002 device=0x1435 driver=amdgpu
+
+## os
+ID=steamos
+VERSION_ID=3.8.10

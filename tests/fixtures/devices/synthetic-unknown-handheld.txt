@@ -1,0 +1,17 @@
+# Synthetic. A device with no registry entry.
+
+## dmi
+sys_vendor=Example Corp
+product_name=Handheld X1
+board_name=EX-1
+
+## cpu
+model_name=AMD Ryzen 7 8840U w/ Radeon 780M Graphics
+threads=16
+
+## gpu
+card0 vendor=0x1002 device=0x1900 driver=amdgpu
+
+## os
+ID=chimeraos
+VERSION_ID=48

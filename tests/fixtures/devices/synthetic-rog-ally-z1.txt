@@ -1,0 +1,19 @@
+# Synthetic. Built from verified DMI strings (VERIFICATION.md item 19).
+
+## dmi
+sys_vendor=ASUSTeK COMPUTER INC.
+product_name=ROG Ally RC71L_RC71L
+board_name=RC71L
+board_vendor=ASUSTeK COMPUTER INC.
+
+## cpu
+model_name=AMD Ryzen Z1
+threads=12
+
+## gpu
+card0 vendor=0x1002 device=0x15bf driver=amdgpu
+
+## os
+ID=bazzite
+ID_LIKE=fedora
+VERSION_ID=42

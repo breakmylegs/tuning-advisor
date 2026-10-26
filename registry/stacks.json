@@ -1,0 +1,156 @@
+{
+  "schema": 1,
+  "notes": "One entry per tool. detect.plugin_names match the plugin.json name field after casefolding and dropping anything that is not a letter or digit. detect.paths are checked for existence only. Vocabulary uses {w} for watts. verified_vocabulary false means the labels have not been checked against the tool's source. See docs/VERIFICATION.md items 21, 22 and 23.",
+  "categories": ["power", "framegen", "upscaler", "fan"],
+  "tools": [
+    {
+      "id": "steam-native",
+      "name": "Steam Performance (TDP limit)",
+      "categories": ["power"],
+      "repo": "https://gitlab.steamos.cloud/holo/steamos-manager",
+      "detect": { "steam_native": true, "paths": ["/usr/lib/steamos-manager", "/usr/bin/steamos-manager"] },
+      "devices": "all",
+      "vocabulary": { "power": "Set TDP Limit to {w} W in Steam, Quick Access, Performance." },
+      "verified_vocabulary": false,
+      "notes": "Present on SteamOS through steamos-manager. Every registry device has a TDP method there."
+    },
+    {
+      "id": "simpledeckytdp",
+      "name": "SimpleDeckyTDP",
+      "categories": ["power"],
+      "repo": "https://github.com/aarron-lee/SimpleDeckyTDP",
+      "detect": { "plugin_names": ["SimpleDeckyTDP"] },
+      "devices": "all",
+      "vocabulary": { "power": "Set TDP (Watts) to {w} in SimpleDeckyTDP." },
+      "verified_vocabulary": true,
+      "reapply_seconds": 15,
+      "notes": "Poll TDP re-applies the value every 15 s by default."
+    },
+    {
+      "id": "powercontrol",
+      "name": "PowerControl",
+      "categories": ["power", "fan"],
+      "repo": "https://github.com/mengmeet/PowerControl",
+      "detect": { "plugin_names": ["PowerControl"] },
+      "devices": "all",
+      "vocabulary": { "power": "Set Thermal Power (TDP) Limit to {w} W in PowerControl." },
+      "verified_vocabulary": true,
+      "notes": ""
+    },
+    {
+      "id": "powertools",
+      "name": "PowerTools",
+      "categories": ["power"],
+      "repo": "https://git.ngni.us/NG-SD-Plugins/PowerTools",
+      "detect": { "plugin_names": ["PowerTools"] },
+      "devices": ["steam-deck"],
+      "vocabulary": { "power": "Set SlowPPT (W) and FastPPT (W) to {w} in PowerTools, PowerPlay Limits." },
+      "verified_vocabulary": true,
+      "notes": "Unmaintained. Last release June 2024."
+    },
+    {
+      "id": "legotdp",
+      "name": "LeGoTDP",
+      "categories": ["power"],
+      "repo": "https://github.com/Rayekkk/LeGoTDP",
+      "detect": { "plugin_names": ["LeGoTDP", "LTDP"] },
+      "devices": ["legion-go"],
+      "vocabulary": { "power": "Select {preset} ({spl} W) in LeGoTDP, or set SPL (Sustained) to {w} W." },
+      "verified_vocabulary": true,
+      "reapply_seconds": 5,
+      "presets": {
+        "default": [
+          { "name": "Minimum", "spl": 5 }, { "name": "Silent", "spl": 8 }, { "name": "Balanced", "spl": 15 },
+          { "name": "Performance", "spl": 25 }, { "name": "Max", "spl": 35 }
+        ],
+        "lenovo-legion-go-s-z2go": [
+          { "name": "Minimum", "spl": 5 }, { "name": "Silent", "spl": 8 }, { "name": "Balanced", "spl": 18 },
+          { "name": "Performance", "spl": 33 }, { "name": "Max", "spl": 40 }
+        ],
+        "lenovo-legion-go-s-z1e": [
+          { "name": "Minimum", "spl": 5 }, { "name": "Silent", "spl": 8 }, { "name": "Balanced", "spl": 18 },
+          { "name": "Performance", "spl": 33 }, { "name": "Max", "spl": 40 }
+        ]
+      },
+      "notes": "Archived. Superseded by Legion Go 2 Companion. Re-applies its values every 5 s."
+    },
+    {
+      "id": "legiongo2companion",
+      "name": "Legion Go 2 Companion",
+      "categories": ["power", "fan"],
+      "repo": "https://github.com/Rayekkk/LegionGo2Companion",
+      "detect": { "plugin_names": ["Legion Go 2 Companion"] },
+      "devices": ["legion-go"],
+      "vocabulary": { "power": "Set the TDP to {w} W in Legion Go 2 Companion." },
+      "verified_vocabulary": false,
+      "notes": ""
+    },
+    {
+      "id": "hhd",
+      "name": "Handheld Daemon",
+      "categories": ["power", "fan"],
+      "repo": "https://github.com/hhd-dev/hhd",
+      "detect": {
+        "paths": [
+          "/etc/systemd/system/multi-user.target.wants/hhd.service",
+          "/etc/systemd/system/multi-user.target.wants/hhd@{user}.service",
+          "/etc/systemd/system/multi-user.target.wants/hhd_local@{user}.service"
+        ]
+      },
+      "devices": "all",
+      "vocabulary": { "power": "Set the TDP to {w} W in Handheld Daemon." },
+      "verified_vocabulary": false,
+      "notes": "Detected from enabled systemd units. Local API on 127.0.0.1:5335 is not used."
+    },
+    {
+      "id": "powerstation",
+      "name": "PowerStation",
+      "categories": ["power"],
+      "repo": "https://github.com/ShadowBlip/PowerStation",
+      "detect": {
+        "paths": [
+          "/etc/systemd/system/multi-user.target.wants/powerstation.service",
+          "/usr/share/dbus-1/system-services/org.shadowblip.PowerStation.service"
+        ]
+      },
+      "devices": "all",
+      "vocabulary": { "power": "Set the TDP to {w} W in your PowerStation front end." },
+      "verified_vocabulary": false,
+      "notes": "A service with no UI of its own. Usually driven by another app."
+    },
+    {
+      "id": "lsfg-vk",
+      "name": "Decky LSFG-VK",
+      "categories": ["framegen"],
+      "repo": "https://github.com/xXJSONDeruloXx/decky-lsfg-vk",
+      "detect": { "plugin_names": ["Decky LSFG-VK"], "home_paths": ["lsfg"] },
+      "devices": "all",
+      "vocabulary": { "framegen": "Enable frame generation in Decky LSFG-VK and add ~/lsfg %command% to the launch options." },
+      "verified_vocabulary": false,
+      "requires": "The paid Lossless Scaling app on Steam.",
+      "notes": ""
+    },
+    {
+      "id": "optiscaler",
+      "name": "OptiScaler (Decky-Framegen or decky-optiscaler)",
+      "categories": ["framegen", "upscaler"],
+      "repo": "https://github.com/xXJSONDeruloXx/Decky-Framegen",
+      "detect": { "plugin_names": ["Decky-Framegen", "decky-optiscaler"], "home_paths": ["fgmod"] },
+      "devices": "all",
+      "vocabulary": { "framegen": "Patch the game with OptiScaler in Decky-Framegen, then pick the frame generation option in game." },
+      "verified_vocabulary": false,
+      "notes": ""
+    },
+    {
+      "id": "fantastic",
+      "name": "Fantastic",
+      "categories": ["fan"],
+      "repo": "https://github.com/NGnius/Fantastic",
+      "detect": { "plugin_names": ["Fantastic"] },
+      "devices": ["steam-deck"],
+      "vocabulary": {},
+      "verified_vocabulary": false,
+      "notes": "Archived."
+    }
+  ]
+}

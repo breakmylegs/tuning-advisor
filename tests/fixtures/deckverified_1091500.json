@@ -1,0 +1,282 @@
+{
+  "gameName": "Cyberpunk 2077",
+  "appId": 1091500,
+  "reports": [
+    {
+      "id": 1,
+      "number": 1,
+      "title": "Report 1",
+      "html_url": "https://github.com/DeckSettings/game-reports-steamos/issues/1",
+      "data": {
+        "summary": "Diamond 85+ via LSFG 2X -  900p Steam Deck Preset XeSS UltraQuality",
+        "game_name": "Cyberpunk 2077",
+        "app_id": 1091500,
+        "device": "Lenovo Legion Go S",
+        "os_version": "CachyOS_rolling_6.18.2-2-cachyos-deckify",
+        "steam_play_compatibility_tool_used": "Steam Proton",
+        "compatibility_tool_version": "default",
+        "game_resolution": "Default",
+        "custom_launch_options": "~/lsfg",
+        "frame_limit": null,
+        "disable_frame_limit": "Off",
+        "enable_vrr": "On",
+        "allow_tearing": "Off",
+        "half_rate_shading": "Off",
+        "tdp_limit": null,
+        "manual_gpu_clock": null,
+        "scaling_mode": "Auto",
+        "scaling_filter": "Linear",
+        "game_display_settings": "#### DISPLAY\n- **MONITOR:** 1\n- **VSYNC:** Off\n- **MAXIMUM FPS:** Off\n- **WINDOWED MODE:** Windowed Borderless\n- **RESOLUTION:** 1440x900\n- **HDR MODE:** None\n- **NVIDIA REFLEX LOW LATENCY:** Off\n- **INTEL® XE LOW LATENCY:** Off",
+        "game_graphics_settings": "#### QUICK PRESET\n- **QUICK PRESET:** Custom\n- **TEXTURE QUALITY:** High\n\n#### RESOLUTION SCALING\n- **RESOLUTION SCALING:** Intel® XeSS Super Resolution 2.0\n- **INTEL® XESS SUPER RESOLUTION 2.0:** Ultra Quality\n- **INTEL® XESS SUPER RESOLUTION 2.0 SHARPNESS:** 0.50\n\n#### FRAME GENERATION\n- **FRAME GENERATION:** Off\n\n#### RAY TRACING\n- **RAY TRACING:** Off\n- **PATH TRACING:** Off\n- **PATH TRACING IN PHOTO MODE:** Off\n\n#### PERFORMANCE\n- **CROWD DENSITY:** Low\n\n#### BASIC\n- **FIELD OF VIEW:** 80\n- **FILM GRAIN:** Off\n- **CHROMATIC ABERRATION:** Off\n- **DEPTH OF FIELD:** On\n- **LENS FLARE:** On\n-",
+        "additional_notes": "This is how I prefer to play. 900p with high FPS. You can either have the game run about 50-60fps by itself, or turn on LSFG 2X for roughly ~85-100fps. \n\nSet Preset to \"SteamDeck\", and change the Resolution Scaling to XeSS Ultra Quality. \n\n![screenshot](https://data/path1\n\n![screenshot](https://data/path2\n\n![screenshot](https://data/path3\n\n![screenshot](https://data/path4\n\n![screenshot](https://data/path5\n\n![screenshot](https://data/path6",
+        "performance_rating": "★★★★★ (5/5)",
+        "target_framerate": "60+ FPS"
+      },
+      "reactions": {
+        "reactions_thumbs_up": 1,
+        "reactions_thumbs_down": 0
+      },
+      "labels": [
+        {
+          "name": "DEVICE: Lenovo Legion Go S Z1E"
+        },
+        {
+          "name": "LAUNCHER: Heroic"
+        }
+      ],
+      "created_at": "2026-01-10T19:19:46Z",
+      "updated_at": "2026-01-10T19:24:31Z"
+    },
+    {
+      "id": 2,
+      "number": 2,
+      "title": "Report 2",
+      "html_url": "https://github.com/DeckSettings/game-reports-steamos/issues/2",
+      "data": {
+        "summary": "Golden 60 dogtown",
+        "game_name": "Cyberpunk 2077",
+        "app_id": 1091500,
+        "device": "Valve Steam Deck LCD (64GB)",
+        "os_version": "3.8.16",
+        "steam_play_compatibility_tool_used": "Steam Proton",
+        "compatibility_tool_version": "proton experimental",
+        "game_resolution": "Default",
+        "custom_launch_options": "/data/path1 %command%",
+        "frame_limit": null,
+        "disable_frame_limit": "Off",
+        "enable_vrr": "Off",
+        "allow_tearing": "On",
+        "half_rate_shading": "On",
+        "tdp_limit": null,
+        "manual_gpu_clock": null,
+        "scaling_mode": "Auto",
+        "scaling_filter": "Linear",
+        "game_display_settings": "- **RESOLUTION:** 1280x800",
+        "game_graphics_settings": null,
+        "additional_notes": "latest cyberpunk with dlc atleast at dogtown 40+\n\n![screenshot](https://data/path7\n\n![screenshot](https://data/path8",
+        "performance_rating": "★★★★★ (5/5)",
+        "target_framerate": "60+ FPS"
+      },
+      "reactions": {
+        "reactions_thumbs_up": 0,
+        "reactions_thumbs_down": 0
+      },
+      "labels": [
+        {
+          "name": "DEVICE: Valve Steam Deck"
+        },
+        {
+          "name": "LAUNCHER: Steam"
+        },
+        {
+          "name": "note:ocr-generated-content"
+        }
+      ],
+      "created_at": "2026-08-22T20:45:21Z",
+      "updated_at": "2026-08-22T20:46:04Z"
+    },
+    {
+      "id": 3,
+      "number": 3,
+      "title": "Report 3",
+      "html_url": "https://github.com/DeckSettings/game-reports-steamos/issues/3",
+      "data": {
+        "summary": "SD Performance",
+        "game_name": "Cyberpunk 2077",
+        "app_id": 1091500,
+        "device": "Valve Steam Deck LCD (256GB/512GB)",
+        "os_version": "3.7.25",
+        "steam_play_compatibility_tool_used": "Steam Proton",
+        "compatibility_tool_version": "Experimental",
+        "game_resolution": "Default",
+        "custom_launch_options": "~/fgmod/fgmod ~/lsfg %command%",
+        "frame_limit": 30,
+        "disable_frame_limit": "Off",
+        "enable_vrr": "Off",
+        "allow_tearing": "Off",
+        "half_rate_shading": "Off",
+        "tdp_limit": null,
+        "manual_gpu_clock": null,
+        "scaling_mode": "Auto",
+        "scaling_filter": "Linear",
+        "game_display_settings": "- **QUICK PRESET:** Custom\n- **RESOLUTION SCALING:** AMD FidelityFX Super Resolution 2.1\n- **AMD FIDELITYFX SUPER RESOLUTION 2.1:** Performance\n- **AMD FSR 2.1 IMAGE SHARPENING:** 0.70\n- **FRAME GENERATION:** Off\n- **TEXTURE QUALITY:** Medium\n- **RAY TRACING:** Off\n- **PATH TRACING:** Off\n- **PATH TRACING IN PHOTO MODE:** Off\n- **CROWD DENSITY:** Low\n- **FIELD OF VIEW:** 80\n- **FILM GRAIN:** Off\n- **CHROMATIC ABERRATION:** Off\n- **DEPTH OF FIELD:** Off\n- **LENS FLARE:** Off\n- **MOTION BLUR:** Off\n- **VIGNETTE:** Off\n- **CONTACT SHADOWS:** On\n- **IMPROVED FACIAL LIGHTING GEOMETRY:** Off\n- **ANI",
+        "game_graphics_settings": null,
+        "additional_notes": "![screenshot](https://data/path9\n\n![screenshot](https://data/path10\n\n![screenshot](https://data/path11\n\n![screenshot](https://data/path12\n\n![screenshot](https://data/path13",
+        "performance_rating": "★★★★☆ (4/5)",
+        "target_framerate": "30-39 FPS"
+      },
+      "reactions": {
+        "reactions_thumbs_up": 0,
+        "reactions_thumbs_down": 0
+      },
+      "labels": [
+        {
+          "name": "DEVICE: Valve Steam Deck"
+        },
+        {
+          "name": "LAUNCHER: Steam"
+        },
+        {
+          "name": "note:ocr-generated-content"
+        }
+      ],
+      "created_at": "2026-06-12T16:05:05Z",
+      "updated_at": "2026-06-12T16:06:08Z"
+    },
+    {
+      "id": 4,
+      "number": 4,
+      "title": "Report 4",
+      "html_url": "https://github.com/DeckSettings/game-reports-steamos/issues/4",
+      "data": {
+        "summary": "Locked 30 - 1200p High Preset XeSS Quality",
+        "game_name": "Cyberpunk 2077",
+        "app_id": 1091500,
+        "device": "Lenovo Legion Go S",
+        "os_version": "CachyOS_rolling_6.18.2-2-cachyos-deckify",
+        "steam_play_compatibility_tool_used": "Steam Proton",
+        "compatibility_tool_version": "default",
+        "game_resolution": "Default",
+        "custom_launch_options": null,
+        "frame_limit": null,
+        "disable_frame_limit": "Off",
+        "enable_vrr": "Off",
+        "allow_tearing": "Off",
+        "half_rate_shading": "Off",
+        "tdp_limit": null,
+        "manual_gpu_clock": null,
+        "scaling_mode": "Auto",
+        "scaling_filter": "Linear",
+        "game_display_settings": "#### DISPLAY\n- **MONITOR:** 1\n- **VSYNC:** Off\n- **MAXIMUM FPS:** On\n- **VALUE:** 30\n- **WINDOWED MODE:** Windowed Borderless\n- **RESOLUTION:** 1920x1200\n- **HDR MODE:** None\n- **NVIDIA REFLEX LOW LATENCY:** Off\n- **INTEL® XE LOW LATENCY:** Off",
+        "game_graphics_settings": "#### QUICK PRESET\n- **QUICK PRESET:** Custom\n\n#### RESOLUTION SCALING\n- **INTEL® XESS SUPER RESOLUTION 2.0:** Quality\n- **INTEL® XESS SUPER RESOLUTION 2.0 SHARPNESS:** 0.50\n\n#### FRAME GENERATION\n- **FRAME GENERATION:** Off\n\n#### TEXTURE QUALITY\n- **TEXTURE QUALITY:** High\n\n#### RAY TRACING\n- **RAY TRACING:** Off\n- **PATH TRACING:** Off\n- **PATH TRACING IN PHOTO MODE:** Off\n\n#### PERFORMANCE\n- **CROWD DENSITY:** Medium\n\n#### BASIC\n- **FIELD OF VIEW:** 80\n- **FILM GRAIN:** On\n- **CHROMATIC ABERRATION:** Off\n- **DEPTH OF FIELD:** On\n- **LENS FLARE:** On\n- **MOTION BLUR:** High\n- **VIGNETTE:** On",
+        "additional_notes": "This is on the \"Performance\" power preset, roughly 25w TDP. Technically the game could be pushed further if you were docked and wanted to push into the 30-33w TDP territory, at the cost of heat and fan noise. \n\nStart with the High Graphics Preset, and switch to Intel XeSS upscaler, Quality.\n\nFor Mods, download the NexusMods App from GitHub and be sure to use WineTricks/Protontricks to install vcrun2022 and d3dcompiler_47. Then add this to the launch option in Steam.\n\nWINEDLLOVERRIDES=\"winmm,version=n,b\" %command%\n\nAlternatively for Heroic Games Launcher, set the Environmental variable WINEDLLO",
+        "performance_rating": "★★★★★ (5/5)",
+        "target_framerate": "30-39 FPS"
+      },
+      "reactions": {
+        "reactions_thumbs_up": 0,
+        "reactions_thumbs_down": 0
+      },
+      "labels": [
+        {
+          "name": "DEVICE: Lenovo Legion Go S Z1E"
+        },
+        {
+          "name": "LAUNCHER: Heroic"
+        }
+      ],
+      "created_at": "2026-01-10T18:42:37Z",
+      "updated_at": "2026-01-10T19:02:40Z"
+    },
+    {
+      "id": 5,
+      "number": 5,
+      "title": "Report 5",
+      "html_url": "https://github.com/DeckSettings/game-reports-steamos/issues/5",
+      "data": {
+        "summary": "Platinum 48 - \"Steam Deck\" Preset with FSR4 and Mods",
+        "game_name": "Cyberpunk 2077",
+        "app_id": 1091500,
+        "device": "Lenovo Legion Go",
+        "os_version": "Bazzite_42_Stable (F42.20251011)",
+        "steam_play_compatibility_tool_used": "Glorious Eggroll Proton (GE)",
+        "compatibility_tool_version": "10-20",
+        "game_resolution": "1280x800",
+        "custom_launch_options": "--launcher-skip",
+        "frame_limit": 48,
+        "disable_frame_limit": "Off",
+        "enable_vrr": "Off",
+        "allow_tearing": "Off",
+        "half_rate_shading": "Off",
+        "tdp_limit": null,
+        "manual_gpu_clock": null,
+        "scaling_mode": "Integer",
+        "scaling_filter": "Pixel",
+        "game_display_settings": "- **MONITOR:** 1\n- **VSYNC:** 48\n- **MAXIMUM FPS:** Off\n- **WINDOWED MODE:** Fullscreen\n- **RESOLUTION:** 1280x800\n- **HDR MODE:** None\n- **NVIDIA REFLEX LOW LATENCY:** Off\n- **INTEL XE LOW LATENCY:** Off",
+        "game_graphics_settings": "- **QUICK PRESET:** Custom\n- **RESOLUTION SCALING:** AMD FidelityFX Super Resolution 4\n- **AMD FIDELITYFX SUPER RESOLUTION 4:** Performance\n- **AMD FSR 4 SHARPNESS:** 0.50\n- **FRAME GENERATION:** Off\n- **TEXTURE QUALITY:** High\n- **RAY TRACING:** Off\n- **PATH TRACING:** Off\n- **PATH TRACING IN PHOTO MODE:** Off\n- **CASCADED SHADOWS RESOLUTION:** Medium\n- **DISTANT SHADOWS RESOLUTION:** High\n- **VOLUMETRIC FOG RESOLUTION:** Low\n- **VOLUMETRIC CLOUD QUALITY:** Medium\n- **MAX DYNAMIC DECALS:** High\n- **SCREEN SPACE REFLECTIONS QUALITY:** High\n- **SUBSURFACE SCATTERING QUALITY:** High\n- **AMBIENT ",
+        "additional_notes": "Use Decky-Framegen to install Optiscaler, which will auto-install the updated FSR4 DLL into the Cyberpunk 2077 directory, or manually find and install the FSR 4.0.2 DLL. FSR4 looks much better than FSR2, FSR3, and Intel XeSS 2.0 and is worth the additional configuration.\n\nSet Quick Preset to \"SteamDeck\", and the only thing you need to change is the Resolution Scaling from FSR2 to FSR4.\n\nWhile not strictly necessary, you can change the VSYNC setting on the Display Settings page to 48, which may have a bit less latency than using the Steam Quick Access Menu's overlay.\n\nFor Mods, download the Nex",
+        "performance_rating": "★★★★★ (5/5)",
+        "target_framerate": "40-49 FPS"
+      },
+      "reactions": {
+        "reactions_thumbs_up": 0,
+        "reactions_thumbs_down": 0
+      },
+      "labels": [
+        {
+          "name": "DEVICE: Lenovo Legion Go"
+        },
+        {
+          "name": "LAUNCHER: Heroic"
+        }
+      ],
+      "created_at": "2025-10-18T21:43:20Z",
+      "updated_at": "2025-10-25T00:17:11Z"
+    },
+    {
+      "id": 6,
+      "number": 6,
+      "title": "Report 6",
+      "html_url": "https://github.com/DeckSettings/game-reports-steamos/issues/6",
+      "data": {
+        "summary": "Balanced settings for 30 FPS on Steam Deck",
+        "game_name": "Cyberpunk 2077",
+        "app_id": 1091500,
+        "device": "Steam Deck LCD (256GB/512GB)",
+        "os_version": "3.6.20",
+        "steam_play_compatibility_tool_used": "Steam Proton",
+        "compatibility_tool_version": "9.0-3",
+        "game_resolution": "Default",
+        "custom_launch_options": null,
+        "frame_limit": 30,
+        "disable_frame_limit": "Off",
+        "enable_vrr": "Off",
+        "allow_tearing": "Off",
+        "half_rate_shading": "Off",
+        "tdp_limit": null,
+        "manual_gpu_clock": null,
+        "scaling_mode": "Auto",
+        "scaling_filter": "Linear",
+        "game_display_settings": "- **Vsync:** Off\n- **Maximum FPS:** Off\n- **Windowed Mode:** Windowed Borderless\n- **Resolution:** 1280x800\n- **Nvidia Reflex Low Latency:** Off",
+        "game_graphics_settings": "- **Resolution Scaling:** Intel XESS 1.3 (Quality)\n- **Intel XESS Sharpness:** 0.50\n- **Frame Generation:** Off\n- **Texture Quality:** High\n- **Ray Tracing:** Off\n- **Crowd Density:** Low\n- **Field of View:** 70\n- **Film Grain:** Off\n- **Chromatic Aberration:** Off\n- **Depth of Field:** On\n- **Lens Flare:** On\n- **Motion Blur:** Off\n- **Contact Shadows:** On\n- **Improved Facial Lighting Geometry:** On\n- **Anisotropy:** 16\n- **Local Shadow Mesh Quality:** Medium\n- **Local Shadow Quality:** Medium\n- **Cascaded Shadows Range:** Low\n- **Cascaded Shadows Resolution:** Medium\n- **Distant Shadows Res",
+        "additional_notes": null,
+        "performance_rating": null,
+        "target_framerate": "30-39 FPS"
+      },
+      "reactions": {
+        "reactions_thumbs_up": 0,
+        "reactions_thumbs_down": 0
+      },
+      "labels": [
+        {
+          "name": "DEVICE: Valve Steam Deck"
+        },
+        {
+          "name": "LAUNCHER: Steam"
+        }
+      ],
+      "created_at": "2025-01-28T20:25:47Z",
+      "updated_at": "2025-10-10T01:56:51Z"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+# Synthetic. Built from verified DMI strings (VERIFICATION.md item 19). Replace with a real capture_device.sh dump.
+
+## dmi
+sys_vendor=LENOVO
+product_name=83N0
+product_version=Legion Go 8ASP2
+product_family=Legion Go 8ASP2
+product_sku=<unreadable>
+board_name=<synthetic>
+board_vendor=LENOVO
+board_version=<synthetic>
+bios_version=<synthetic>
+
+## cpu
+model_name=AMD Ryzen Z2 Extreme
+threads=16
+
+## memory
+MemTotal:       32000000 kB
+
+## gpu
+card1 vendor=0x1002 device=0x150e driver=amdgpu
+
+## os
+ID=steamos
+ID_LIKE=arch
+NAME="SteamOS"
+VERSION_ID=3.8.10
