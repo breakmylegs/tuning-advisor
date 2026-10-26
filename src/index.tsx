@@ -19,6 +19,7 @@ import { FaSlidersH } from "react-icons/fa";
 import { UpdateBadge } from "./shared/UpdateBadge";
 import { useBackendEvent } from "./shared/useBackendEvent";
 import { copyText } from "./clipboard";
+import { makeFollower } from "./follow";
 import { currentCompat, recentGames, runningGame, watchGames, type GameRef } from "./game";
 import type { AdvisorSettings, AiProviderView, CompatSection, View, Workload } from "./types";
 import {
@@ -77,6 +78,9 @@ const warn: React.CSSProperties = { ...note, padding: "6px 8px", borderRadius: 4
 
 // The last game the watcher saw, so the panel can pick it up when it opens.
 let lastSeen: GameRef | null = null;
+// Each running game is picked once, so a game the player picks is not replaced
+// every time the panel opens.
+const follower = makeFollower();
 
 function open(url: string) {
   Navigation.NavigateToExternalWeb(url);
@@ -684,6 +688,7 @@ function SettingsSection({ view, apply }: { view: View; apply: (v: View | undefi
       <PanelSectionRow>
         <ToggleField
           label="Remove settings on uninstall"
+          description="Updating by installing from the URL again counts as an uninstall. Leave this off to keep your keys."
           checked={view.settings.remove_data_on_uninstall}
           onChange={(v) => save({ remove_data_on_uninstall: v })}
         />
@@ -746,7 +751,7 @@ function Content() {
       setView(current);
       const playing = runningGame() ?? lastSeen;
       const known = current.game?.appid ?? current.game?.shortcut_appid;
-      if (playing && playing.appid !== known) {
+      if (playing && follower.shouldFollow(playing.appid) && playing.appid !== known) {
         await pick(playing);
       } else if (known && current.game) {
         // Launch options may have changed since the game was picked. Read them again.
@@ -869,10 +874,12 @@ export default definePlugin(() => {
   const stopWatching = watchGames(
     (game) => {
       lastSeen = game;
+      follower.started(game.appid);
       sendGame(game);
     },
     () => {
       lastSeen = null;
+      follower.stopped();
     },
   );
 

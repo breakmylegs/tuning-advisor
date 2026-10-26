@@ -27,6 +27,8 @@ Issues and source: [breakmylegs/decky-plugins](https://github.com/breakmylegs/de
 1. Decky Settings, General, turn on Developer mode.
 2. Decky Settings, Developer, Install Plugin from URL, then enter the zip URL from the latest release.
 
+Needs Decky Loader 3.0.4 or later. If you installed 0.5.0 or earlier, uninstall it first, then install this one. Your settings are kept.
+
 ## Supported devices
 
 Steam Deck LCD and OLED, ROG Ally (Z1 and Z1 Extreme), ROG Ally X, ROG Xbox Ally, ROG Xbox Ally X, Legion Go, Legion Go S (Z2 Go and Z1 Extreme), Legion Go 2 (Z2 and Z2 Extreme), MSI Claw A8, Claw A1M, Claw 7 AI+ and Claw 8 AI+. Entries marked unverified in `registry/devices.json` still need checking against the maker's spec page.

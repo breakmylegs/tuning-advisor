@@ -1,6 +1,6 @@
 {
   "plugin": "tuning-advisor",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "repo": "breakmylegs/tuning-advisor",
   "asset": "tuning-advisor.zip",
   "monorepo": "breakmylegs/decky-plugins"
