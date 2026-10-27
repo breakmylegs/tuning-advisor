@@ -18,7 +18,7 @@ import { useEffect, useState } from "react";
 import { FaSlidersH } from "react-icons/fa";
 import { UpdateBadge } from "./shared/UpdateBadge";
 import { useBackendEvent } from "./shared/useBackendEvent";
-import { copyText } from "./clipboard";
+import { copyText } from "./shared/clipboard";
 import { makeFollower } from "./follow";
 import { currentCompat, recentGames, runningGame, watchGames, type GameRef } from "./game";
 import type { AdvisorSettings, AiProviderView, CompatSection, View, Workload } from "./types";
@@ -42,6 +42,10 @@ import {
   sourceLine,
   stackSummary,
 } from "./view";
+
+// plugin.json "name", exactly. Decky lists the plugin by it and matches the
+// installed copy by it when Update now replaces the plugin.
+const PLUGIN_NAME = "Tuning Advisor";
 
 type Wrapped = { ok: boolean; view?: View; message?: string; error?: { message: string } };
 
@@ -799,7 +803,7 @@ function Content() {
             </div>
           </PanelSectionRow>
         )}
-        <UpdateBadge update={view.update} />
+        <UpdateBadge update={view.update} name={PLUGIN_NAME} />
         {recent.length > 0 && (
           <PanelSectionRow>
             <DropdownItem
@@ -884,7 +888,7 @@ export default definePlugin(() => {
   );
 
   return {
-    name: "Tuning Advisor",
+    name: PLUGIN_NAME,
     titleView: <div className={staticClasses.Title}>Tuning Advisor</div>,
     content: <Content />,
     icon: <FaSlidersH />,

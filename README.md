@@ -29,6 +29,12 @@ Issues and source: [breakmylegs/decky-plugins](https://github.com/breakmylegs/de
 
 Needs Decky Loader 3.0.4 or later. If you installed 0.5.0 or earlier, uninstall it first, then install this one. Your settings are kept.
 
+## Updating
+
+When a new release is out, the plugin shows Update available. Press Update now, then confirm in Decky's prompt. Your settings and keys are kept.
+
+If Update now is not offered, or Decky does not accept it, the plugin shows the install link with a Copy link button. Use it with Install Plugin from URL. Leave "Remove settings on uninstall" off, because an update counts as an uninstall.
+
 ## Supported devices
 
 Steam Deck LCD and OLED, ROG Ally (Z1 and Z1 Extreme), ROG Ally X, ROG Xbox Ally, ROG Xbox Ally X, Legion Go, Legion Go S (Z2 Go and Z1 Extreme), Legion Go 2 (Z2 and Z2 Extreme), MSI Claw A8, Claw A1M, Claw 7 AI+ and Claw 8 AI+. Entries marked unverified in `registry/devices.json` still need checking against the maker's spec page.
