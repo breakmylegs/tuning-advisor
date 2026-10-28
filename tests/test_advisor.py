@@ -461,3 +461,13 @@ def test_deck_verified_refusal_is_not_called_a_credentials_problem(monkeypatch):
     message = info.value.message
     assert "Deck Verified turned the request away (HTTP 403)" in message
     assert "credentials" not in message and "whitelist" not in message
+
+
+def test_view_has_update_info_before_any_check(tmp_path, device_root):
+    # The Updates section needs the version and install link from the start,
+    # not only after the first GitHub check.
+    service, _, _ = make_service(tmp_path, device_root)
+    assert service.update_info is None
+    update = service.view()["update"]
+    assert update is not None and update["current"] == "0.1.0"
+    assert set(update) >= {"install_url", "checked_at", "check_failed", "available"}

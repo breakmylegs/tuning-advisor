@@ -16,8 +16,10 @@ import {
 } from "@decky/ui";
 import { useEffect, useState } from "react";
 import { FaSlidersH } from "react-icons/fa";
+import type { UpdateInfo } from "./shared/backend";
 import { PanelBoundary } from "./shared/PanelBoundary";
 import { UpdateBadge } from "./shared/UpdateBadge";
+import { UpdatesSection } from "./shared/UpdatesSection";
 import { useBackendEvent } from "./shared/useBackendEvent";
 import { copyText } from "./shared/clipboard";
 import { makeFollower } from "./follow";
@@ -63,6 +65,7 @@ async function sendGame(game: GameRef): Promise<Wrapped> {
 }
 const refresh = callable<[], Wrapped>("refresh");
 const redetect = callable<[], Wrapped>("redetect");
+const checkUpdate = callable<[force: boolean], UpdateInfo | null>("check_update");
 const saveSettings = callable<[values: Partial<AdvisorSettings>], Wrapped>("save_settings");
 const clearCache = callable<[], { ok: boolean; removed: number }>("clear_cache");
 const setSecret = callable<[name: string, value: string], Wrapped>("set_secret");
@@ -865,6 +868,7 @@ function Content() {
         </PanelSection>
       )}
 
+      <UpdatesSection update={view.update} name={PLUGIN_NAME} check={() => checkUpdate(true)} />
       <PanelSection title="Settings">
         <PanelSectionRow>
           <ButtonItem layout="below" onClick={() => setShowSettings(!showSettings)}>

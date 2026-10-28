@@ -121,8 +121,9 @@ class AdvisorService:
 
     async def check_update(self, force: bool = False) -> dict[str, Any] | None:
         if not self.settings.get("update_check") and not force:
-            self.update_info = None
-            return None
+            # No network call, but the panel still gets the version and link.
+            self.update_info = self.updates.known()
+            return self.update_info
         self.update_info = await asyncio.to_thread(self.updates.check, force)
         await self._emit("update", self.update_info)
         return self.update_info
@@ -301,7 +302,8 @@ class AdvisorService:
             "protondb": self.pdb_state,
             "pcgw": dict(self.pcgw_state, data=self.pcgw_data, has_password=self.secrets.has(PCGW_SECRET)),
             "recommendations": self.recommendations(),
-            "update": self.update_info,
+            # Before the first check, still send the version and install link.
+            "update": self.update_info or self.updates.known(),
             "ai": {
                 "providers": self.ai.providers_view(),
                 "used_today": self.ai.used_today(),
