@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Mapping
 
 from plugin_core.errors import classify
-from plugin_core.http import fetch_json
+from plugin_core.http import fetch_json, set_user_agent
 from plugin_core.secrets import SecretStore, import_path, read_import_file
 from plugin_core.settings import JsonStore
 from plugin_core.update_check import UpdateChecker, load_build_info
@@ -70,6 +70,7 @@ class AdvisorService:
         self.log = logger
         self._fetch_reports = fetch_reports
         build_info = load_build_info(plugin_dir)
+        set_user_agent(build_info, version)
         self.updates = UpdateChecker(build_info, version, os.path.join(runtime_dir, "update.json"), fetch_json)
         self.protondb = protondb.ProtonDbIndex(runtime_dir, protondb.index_url(build_info.get("monorepo", "")),
                                                fetch=protondb_fetch)

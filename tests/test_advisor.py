@@ -445,3 +445,19 @@ def test_view_without_a_game_sends_finished_cards(tmp_path, device_root):
     assert [r["source"] for r in recs] == ["fallback"]
     assert recs[0]["lines"]["power"], "general guidance must have its power line"
     assert "compat_section" in recs[0] and "flags" in recs[0]
+
+
+def test_deck_verified_refusal_is_not_called_a_credentials_problem(monkeypatch):
+    class Refused:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def get(self, *args, **kwargs):
+            return type("R", (), {"status": 403})()
+
+    monkeypatch.setattr(deckverified, "HttpClient", Refused)
+    with pytest.raises(deckverified.PluginError) as info:
+        deckverified.fetch(1091500, None)
+    message = info.value.message
+    assert "Deck Verified turned the request away (HTTP 403)" in message
+    assert "credentials" not in message and "whitelist" not in message

@@ -35,7 +35,7 @@ SAFE_NAME = re.compile(r"^[^\"\\]{1,200}$")
 
 def user_agent(version: str, monorepo: str) -> str:
     where = f"https://github.com/{monorepo}" if monorepo else "decky-plugins"
-    return f"decky-tuning-advisor/{version} ({where}) python-urllib"
+    return f"decky-tuning-advisor/{version} ({where})"
 
 
 def split_list(value: Any) -> list[str]:

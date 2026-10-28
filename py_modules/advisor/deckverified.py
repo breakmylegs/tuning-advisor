@@ -14,7 +14,7 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
-from plugin_core.errors import BAD_RESPONSE, PluginError, from_status
+from plugin_core.errors import BAD_RESPONSE, FORBIDDEN, HTTP_ERROR, PluginError, from_status
 from plugin_core.http import HttpClient, parse_base_url
 
 BASE = "https://deckverified.games"
@@ -38,6 +38,11 @@ def fetch(appid: int | None, name: str | None, timeout: float = 10.0) -> dict[st
     res = client.get(PATH, params=params)
     if res.status == 204:
         return {"reports": []}
+    if res.status in (403, 429):
+        # Deck Verified is public, so this is the site turning the request
+        # away, not a credentials problem.
+        raise PluginError(FORBIDDEN if res.status == 403 else HTTP_ERROR, f"HTTP {res.status}", res.status,
+                          hint=f"Deck Verified turned the request away (HTTP {res.status}). Try Refresh reports later.")
     if res.status != 200:
         raise from_status(res.status)
     data = res.json()
