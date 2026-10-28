@@ -16,6 +16,7 @@ import {
 } from "@decky/ui";
 import { useEffect, useState } from "react";
 import { FaSlidersH } from "react-icons/fa";
+import { PanelBoundary } from "./shared/PanelBoundary";
 import { UpdateBadge } from "./shared/UpdateBadge";
 import { useBackendEvent } from "./shared/useBackendEvent";
 import { copyText } from "./shared/clipboard";
@@ -79,6 +80,7 @@ const deleteImportFile = callable<[], { ok: boolean; message?: string }>("delete
 
 const note: React.CSSProperties = { fontSize: 12, lineHeight: 1.35 };
 const warn: React.CSSProperties = { ...note, padding: "6px 8px", borderRadius: 4, background: "#4f3a1f" };
+const detailText: React.CSSProperties = { fontFamily: "monospace", fontSize: 11, wordBreak: "break-all", marginTop: 4 };
 
 // The last game the watcher saw, so the panel can pick it up when it opens.
 let lastSeen: GameRef | null = null;
@@ -521,7 +523,10 @@ function PcgwCard({ view }: { view: View }) {
     <PanelSection title="PCGamingWiki">
       {state.error && (
         <PanelSectionRow>
-          <div style={warn}>{state.error.message}</div>
+          <div style={warn}>
+            {state.error.message}
+            {state.error.detail && <div style={detailText}>Detail: {state.error.detail}</div>}
+          </div>
         </PanelSectionRow>
       )}
       {!state.data && !state.error && (
@@ -800,6 +805,7 @@ function Content() {
             <div style={warn}>
               {view.source.cached ? "Showing cached reports. " : "No reports. "}
               {view.source.error.message}
+              {view.source.error.detail && <div style={detailText}>Detail: {view.source.error.detail}</div>}
             </div>
           </PanelSectionRow>
         )}
@@ -890,7 +896,11 @@ export default definePlugin(() => {
   return {
     name: PLUGIN_NAME,
     titleView: <div className={staticClasses.Title}>Tuning Advisor</div>,
-    content: <Content />,
+    content: (
+      <PanelBoundary>
+        <Content />
+      </PanelBoundary>
+    ),
     icon: <FaSlidersH />,
     onDismount() {
       stopWatching();

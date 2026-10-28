@@ -73,6 +73,13 @@ describe("advisor view", () => {
     expect(g[2].lines).toEqual(["Graphics preset: Custom.", "Texture Quality: High"]);
   });
 
+  it("does not throw on a recommendation without lines or settings", () => {
+    // 0.7.0 sent the no-game card without lines, and this threw, which took the
+    // whole panel down with Steam's Shared SteamUI error.
+    const bare = { ...rec, lines: undefined, in_game: undefined } as unknown as Recommendation;
+    expect(groups(bare)).toEqual([]);
+  });
+
   it("summarises device and stack", () => {
     expect(deviceLine(view)).toBe("Lenovo Legion Go 2 (AMD Ryzen Z2 Extreme)");
     expect(deviceLine({ ...view, device: { ...view.device, generic: true } })).toBe("Generic profile (AMD Ryzen Z2 Extreme)");

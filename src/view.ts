@@ -59,10 +59,12 @@ export function matchNote(rec: Recommendation): string {
   return `Reported on ${MATCH_LABELS[rec.device_match] ?? "another device"}. Values are shown as reported.`;
 }
 
+// Tolerates a recommendation without lines or settings. A throw here takes the
+// whole panel down with Steam's "Shared SteamUI" error.
 export function groups(rec: Recommendation): { title: string; lines: string[] }[] {
-  const out = GROUPS.map((g) => ({ title: g.title, lines: [...(rec.lines[g.key] ?? [])] }));
+  const out = GROUPS.map((g) => ({ title: g.title, lines: [...(rec.lines?.[g.key] ?? [])] }));
   const inGame = out.find((g) => g.title === "In-game");
-  if (inGame) for (const s of rec.in_game.settings.slice(0, 8)) inGame.lines.push(`${s.name}: ${s.value}`);
+  if (inGame) for (const s of (rec.in_game?.settings ?? []).slice(0, 8)) inGame.lines.push(`${s.name}: ${s.value}`);
   return out.filter((g) => g.lines.length > 0);
 }
 

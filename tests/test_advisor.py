@@ -433,3 +433,15 @@ def test_service_no_game_shows_fallback(tmp_path, device_root):
     assert view["device"]["generic"] is True and view["game"] is None
     assert [r["source"] for r in view["recommendations"]] == ["fallback"]
     assert [c["kind"] for c in view["conflicts"]] == ["no_power"]
+
+
+def test_view_without_a_game_sends_finished_cards(tmp_path, device_root):
+    # The panel reads lines and compat_section on every card. Before 0.7.1 the
+    # no-game card skipped validation and translation, and the panel crashed.
+    service, _, _ = make_service(tmp_path, device_root)
+    view = service.view()
+    assert view["game"] is None
+    recs = view["recommendations"]
+    assert [r["source"] for r in recs] == ["fallback"]
+    assert recs[0]["lines"]["power"], "general guidance must have its power line"
+    assert "compat_section" in recs[0] and "flags" in recs[0]

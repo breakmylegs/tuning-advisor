@@ -227,7 +227,7 @@ class AdvisorService:
                 raw = await asyncio.to_thread(self._fetch_reports, game.get("appid"), None if game.get("appid") else game.get("name"))
             except Exception as exc:  # noqa: BLE001, classified
                 err = classify(exc)
-                self.log.warning("deck verified fetch failed: %s", err.kind)
+                self.log.warning("deck verified fetch failed: %s %s", err.kind, err.detail)
                 if cached:
                     self._use(cached[0], cached[1], from_cache=True)
                     self.source_state["error"] = err.to_dict()
@@ -255,8 +255,10 @@ class AdvisorService:
     def recommendations(self) -> list[dict[str, Any]]:
         low = bool(self.game and self.game.get("shortcut"))
         selected = self.selected()
-        recs = recommend.build(self.reports + self.pdb_reports, self.registry, self.device, selected,
-                               self.settings.get("workload"), low)
+        # With no game there are no reports, only general guidance. It still goes
+        # through the full pipeline, because the panel reads its lines and compat.
+        reports = self.reports + self.pdb_reports if self.game else []
+        recs = recommend.build(reports, self.registry, self.device, selected, self.settings.get("workload"), low)
         listed = (self.pcgw_data or {}).get("upscaling") or []
         for rec in recs:
             rec["compat_section"] = compat.section(rec, self.current_compat, selected, low)
@@ -297,7 +299,7 @@ class AdvisorService:
             "current": self.current_values(selected),
             "protondb": self.pdb_state,
             "pcgw": dict(self.pcgw_state, data=self.pcgw_data, has_password=self.secrets.has(PCGW_SECRET)),
-            "recommendations": self.recommendations() if self.game else [recommend.fallback(self.device, self.settings.get("workload"))],
+            "recommendations": self.recommendations(),
             "update": self.update_info,
             "ai": {
                 "providers": self.ai.providers_view(),

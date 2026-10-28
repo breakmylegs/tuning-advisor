@@ -17,7 +17,7 @@ export interface AdvisorSettings {
 
 export interface ProtonDbState {
   enabled: boolean;
-  error: { kind: string; message: string } | null;
+  error: { kind: string; message: string; detail?: string } | null;
   dump: string | null;
   summary: { reports: number; works: number; handheld: number; share: number | null; dump: string | null; attribution: string } | null;
 }
@@ -47,7 +47,7 @@ export interface CurrentValues {
 
 export interface PcgwState {
   enabled: boolean;
-  error: { kind: string; message: string } | null;
+  error: { kind: string; message: string; detail?: string } | null;
   cached: boolean;
   has_password: boolean;
   data: PcgwData | null;
@@ -66,7 +66,7 @@ export interface AiResult {
   cached: boolean;
   rec: Recommendation | null;
   discarded: string[];
-  error: { kind: string; message: string } | null;
+  error: { kind: string; message: string; detail?: string } | null;
   generated_at: number | null;
 }
 
@@ -152,7 +152,7 @@ export interface View {
   };
   conflicts: { kind: string; text: string }[];
   game: Game | null;
-  source: { cached: boolean; error: { message: string } | null; fetched_at: number | null; enabled: boolean };
+  source: { cached: boolean; error: { message: string; detail?: string } | null; fetched_at: number | null; enabled: boolean };
   current: CurrentValues;
   protondb: ProtonDbState;
   pcgw: PcgwState;
