@@ -199,3 +199,22 @@ export function currentLines(current: CurrentValues, rec: Recommendation, names:
   }
   return lines;
 }
+
+// AI is ready when a provider has a key, a model is chosen and a game is picked.
+export function aiReady(view: View): boolean {
+  const provider = view.ai.providers.find((p) => p.id === view.settings.ai_provider);
+  return Boolean(provider?.key.set && view.settings.ai_model && view.game);
+}
+
+// The cards show the AI recommendation in place of the source reports while
+// the user has it on and one exists. Back to source reports turns it off.
+export function shownRecommendations(view: View, useAi: boolean): { recs: Recommendation[]; ai: boolean } {
+  const aiRec = view.ai.result?.rec;
+  if (useAi && aiRec) return { recs: [aiRec], ai: true };
+  return { recs: view.recommendations, ai: false };
+}
+
+// Long names push Steam's dropdown menu off the side of the panel.
+export function pickerLabel(name: string, limit = 36): string {
+  return name.length <= limit ? name : `${name.slice(0, limit - 3).trimEnd()}...`;
+}

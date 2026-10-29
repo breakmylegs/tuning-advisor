@@ -16,7 +16,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import pytest
 
 from advisor import deckverified, registry as regmod
-from advisor.ai import prompt
+from advisor.ai import base, prompt
 from advisor.ai.anthropic import API_VERSION, AnthropicProvider
 from advisor.ai.base import RECOMMENDATION_SCHEMA
 from advisor.ai.gemini import GeminiProvider
@@ -111,7 +111,7 @@ def test_openai_models_and_responses(fake):
     assert req["headers"]["authorization"] == f"Bearer {KEY}"
     body = req["json"]
     assert body["text"]["format"]["type"] == "json_schema" and body["text"]["format"]["strict"] is True
-    assert body["max_output_tokens"] == 1500 and body["instructions"] == "sys"
+    assert body["max_output_tokens"] == base.MAX_OUTPUT_TOKENS == 8192 and body["instructions"] == "sys"
     assert not any(k in body for k in SAMPLING)
 
 
@@ -126,7 +126,7 @@ def test_anthropic_models_and_messages(fake):
     req = fake.requests[-1]
     assert req["headers"]["x-api-key"] == KEY and req["headers"]["anthropic-version"] == API_VERSION == "2026-10-21"
     body = req["json"]
-    assert body["output_config"]["format"]["type"] == "json_schema" and body["max_tokens"] == 1500
+    assert body["output_config"]["format"]["type"] == "json_schema" and body["max_tokens"] == base.MAX_OUTPUT_TOKENS
     assert body["system"] == "sys" and body["messages"] == [{"role": "user", "content": "user"}]
     assert not any(k in body for k in SAMPLING) and "output_format" not in body
 
@@ -150,6 +150,8 @@ def test_gemini_models_generate_and_legacy_retry(fake):
     assert "responseJsonSchema" in calls[1] and "responseSchema" not in calls[1]
     assert fake.requests[-1]["headers"]["x-goog-api-key"] == KEY
     assert not any(k in calls[0] for k in SAMPLING)
+    # Thinking counts against this, so it must leave room for the JSON.
+    assert calls[0]["maxOutputTokens"] == base.MAX_OUTPUT_TOKENS >= 8192
     with pytest.raises(PluginError):
         p.generate(KEY, "bad/model", "s", "u", RECOMMENDATION_SCHEMA)
 

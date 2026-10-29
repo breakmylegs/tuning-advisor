@@ -18,7 +18,7 @@ A Decky Loader plugin. It detects your game, handheld and tuning tools, then rec
 - Shows what your own tools are set to for this game, next to the recommendation: SimpleDeckyTDP, PowerControl, LeGoTDP and Legion Go 2 Companion TDP, and your Decky LSFG-VK profile. Read only.
 - Optional ProtonDB reports from handhelds, from a monthly index of ProtonDB's open data. Adds Proton versions, launch options and notes, with the share of reports that say the game works.
 - Optional PCGamingWiki details with your own bot password: which upscalers and frame generation the game supports, and where it keeps config and save files. Flags a recommended upscaler the game does not list.
-- Optional AI recommendation with your own OpenAI, Anthropic or Google Gemini API key. Off until you set it up, and sent only when you press Generate. The reply is labelled "AI generated, unverified", shown next to the community reports, checked against your device, and never applied. Anything out of range is discarded and listed.
+- Optional AI recommendation with your own OpenAI, Anthropic or Google Gemini API key. Off until you set it up, and sent only when you press Generate. The reply replaces the report cards while you view it, labelled "AI generated, unverified". Back to source reports returns to the community reports. It is checked against your device and never applied. Anything out of range is discarded and listed.
 
 Issues and source: [breakmylegs/decky-plugins](https://github.com/breakmylegs/decky-plugins).
 
@@ -63,7 +63,8 @@ Both are off by default. Turn them on in settings.
 
 The key names are `openai_api_key`, `anthropic_api_key` and `gemini_api_key`. Delete the file when asked.
 
-2. In AI recommendation, pick the provider, press Load model list, pick a model, then Generate AI recommendation.
+2. In AI setup at the bottom of the panel, pick the provider, press Load model list and pick a model.
+3. Generate AI recommendation then appears near the top. Press it to see the AI values in the cards. Back to source reports switches back, and Show AI recommendation shows the last reply again without a new request.
 
 Use a dedicated key with a spending limit. Set a daily request limit in settings if you want one.
 

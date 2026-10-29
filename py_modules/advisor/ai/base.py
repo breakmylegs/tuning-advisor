@@ -14,14 +14,17 @@ from plugin_core.errors import AUTH, BAD_RESPONSE, HTTP_ERROR, PluginError
 from plugin_core.http import HttpClient, Response, parse_base_url
 
 TIMEOUT = 60.0
-MAX_OUTPUT_TOKENS = 1500
+# Current models think before they answer, and OpenAI and Gemini count that
+# against this limit. 1500 ran out before the JSON was finished on most
+# replies. The prompt still asks for a short answer, so cost stays small.
+MAX_OUTPUT_TOKENS = 8192
 
 HINT_401 = "The provider rejected the API key. Check it in settings, or create a new one."
 HINT_403 = "The provider refused this request. Check the key's permissions and that the model is enabled for it."
 HINT_404 = "The provider does not know this model. Load the model list again and pick another."
 HINT_429 = "Rate or spending limit reached. Wait a while, or raise the limit in your provider account."
 HINT_5XX = "The provider is having problems. Try again later."
-HINT_TRUNCATED = "The reply was cut off before it finished. Try again or pick another model."
+HINT_TRUNCATED = "The reply was cut off before it finished. Try again, or pick a faster model such as a Flash or mini one."
 
 
 def check(res: Response) -> Any:

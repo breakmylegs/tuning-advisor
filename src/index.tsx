@@ -28,6 +28,9 @@ import type { AdvisorSettings, AiProviderView, CompatSection, View, Workload } f
 import {
   SECRET_FOR,
   aiPrivacyLine,
+  aiReady,
+  pickerLabel,
+  shownRecommendations,
   aiStatus,
   capLine,
   currentLines,
@@ -83,6 +86,9 @@ const deleteImportFile = callable<[], { ok: boolean; message?: string }>("delete
 
 const note: React.CSSProperties = { fontSize: 12, lineHeight: 1.35 };
 const warn: React.CSSProperties = { ...note, padding: "6px 8px", borderRadius: 4, background: "#4f3a1f" };
+// Steam opens a dropdown menu from its button and grows it to the right. Shift
+// it back on screen when it would overflow the panel.
+const MENU_FIT = { bShiftToFitWindow: true, bFitToWindow: true };
 const detailText: React.CSSProperties = { fontFamily: "monospace", fontSize: 11, wordBreak: "break-all", marginTop: 4 };
 
 // The last game the watcher saw, so the panel can pick it up when it opens.
@@ -98,23 +104,28 @@ function open(url: string) {
 
 function RecommendationCard({
   view,
+  recs,
+  discarded = [],
   index,
   setIndex,
   apply,
 }: {
   view: View;
+  recs: View["recommendations"];
+  discarded?: string[];
   index: number;
   setIndex: (i: number) => void;
   apply: (v: View | undefined) => void;
 }) {
-  const recs = view.recommendations;
   const rec = recs[Math.min(index, recs.length - 1)];
   if (!rec) return null;
   const save = async (values: Partial<AdvisorSettings>) => {
     apply((await saveSettings(values)).view);
   };
   return (
-    <PanelSection title={rec.source === "fallback" ? "General guidance" : "Recommendation"}>
+    <PanelSection
+      title={rec.source === "fallback" ? "General guidance" : rec.source === "ai" ? "AI recommendation, unverified" : "Recommendation"}
+    >
       <PanelSectionRow>
         <Field focusable bottomSeparator="none" label={<span style={note}>{sourceLine(rec, view.source.cached)}</span>}>
           <span style={note}>{matchNote(rec)}</span>
@@ -123,6 +134,7 @@ function RecommendationCard({
       {rec.source === "fallback" && (
         <PanelSectionRow>
           <DropdownItem
+            contextMenuPositionOptions={MENU_FIT}
             label="Game load"
             rgOptions={[
               { data: "light", label: "Light" },
@@ -145,11 +157,15 @@ function RecommendationCard({
           </Field>
         </PanelSectionRow>
       ))}
-      {rec.flags.length > 0 && (
+      {(rec.flags.length > 0 || discarded.length > 0) && (
         <PanelSectionRow>
           <div style={warn}>
             {rec.flags.map((f, i) => (
               <div key={i}>{f}</div>
+            ))}
+            {discarded.length > 0 && <div>Discarded from the AI reply:</div>}
+            {discarded.map((d, i) => (
+              <div key={`d${i}`}>{d}</div>
             ))}
           </div>
         </PanelSectionRow>
@@ -168,7 +184,7 @@ function RecommendationCard({
       )}
       {rec.source !== "fallback" && (rec.report_title || rec.notes) && (
         <PanelSectionRow>
-          <Field focusable bottomSeparator="none" label="From the report">
+          <Field focusable bottomSeparator="none" label={rec.source === "ai" ? "Model notes" : "From the report"}>
             <div style={{ ...note, wordBreak: "break-word" }}>
               {rec.report_title && <div>{rec.report_title}</div>}
               {rec.notes && <div>{rec.notes}</div>}
@@ -302,13 +318,66 @@ function CompatCard({ section }: { section: CompatSection }) {
   );
 }
 
-function AiCard({ view, apply }: { view: View; apply: (v: View | undefined) => void }) {
-  const [models, setModels] = useState<{ id: string; label: string }[]>([]);
+// Near the top once AI is set up. Generating swaps the cards below to the AI
+// values. Back to source reports swaps them back without a new request.
+function AiTopCard({
+  view,
+  apply,
+  showingAi,
+  setShowingAi,
+}: {
+  view: View;
+  apply: (v: View | undefined) => void;
+  showingAi: boolean;
+  setShowingAi: (on: boolean) => void;
+}) {
   const [busy, setBusy] = useState(false);
+  const provider = view.ai.providers.find((p) => p.id === view.settings.ai_provider);
+  const result = view.ai.result;
+  if (!aiReady(view) || !provider) return null;
+  return (
+    <PanelSection title="AI recommendation">
+      <PanelSectionRow>
+        <ButtonItem
+          layout="below"
+          disabled={busy}
+          description={<span style={note}>{aiPrivacyLine(provider.name)}</span>}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const next = (await generateAi()).view;
+              apply(next);
+              if (next?.ai.result?.rec) setShowingAi(true);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {busy ? "Generating..." : result?.rec ? "Generate again" : "Generate AI recommendation"}
+        </ButtonItem>
+      </PanelSectionRow>
+      {result && (
+        <PanelSectionRow>
+          <div style={result.error ? warn : { ...warn, background: "#2a3a4f" }}>{aiStatus(result)}</div>
+        </PanelSectionRow>
+      )}
+      {result?.rec && (
+        <PanelSectionRow>
+          <ButtonItem layout="below" onClick={() => setShowingAi(!showingAi)}>
+            {showingAi ? "Back to source reports" : "Show AI recommendation"}
+          </ButtonItem>
+        </PanelSectionRow>
+      )}
+    </PanelSection>
+  );
+}
+
+// At the bottom: provider, model and the daily count. Keys are in Settings.
+function AiConfigCard({ view, apply }: { view: View; apply: (v: View | undefined) => void }) {
+  const [models, setModels] = useState<{ id: string; label: string }[]>([]);
   const [message, setMessage] = useState("");
   const providerId = view.settings.ai_provider;
   const provider = view.ai.providers.find((p) => p.id === providerId);
-  const result = view.ai.result;
   const save = async (values: Partial<AdvisorSettings>) => apply((await saveSettings(values)).view);
 
   const load = async () => {
@@ -327,9 +396,10 @@ function AiCard({ view, apply }: { view: View; apply: (v: View | undefined) => v
       : [];
 
   return (
-    <PanelSection title="AI recommendation (optional)">
+    <PanelSection title="AI setup (optional)">
       <PanelSectionRow>
         <DropdownItem
+          contextMenuPositionOptions={MENU_FIT}
           label="Provider"
           rgOptions={[{ data: "", label: "Off" }, ...view.ai.providers.map((p) => ({ data: p.id, label: p.name }))]}
           selectedOption={providerId}
@@ -341,7 +411,7 @@ function AiCard({ view, apply }: { view: View; apply: (v: View | undefined) => v
       </PanelSectionRow>
       {provider && !provider.key.set && (
         <PanelSectionRow>
-          <div style={note}>Add your {provider.name} API key in settings below first.</div>
+          <div style={note}>Add your {provider.name} API key in Settings first.</div>
         </PanelSectionRow>
       )}
       {provider && provider.key.set && (
@@ -354,7 +424,9 @@ function AiCard({ view, apply }: { view: View; apply: (v: View | undefined) => v
           {modelOptions.length > 0 && (
             <PanelSectionRow>
               <DropdownItem
+                contextMenuPositionOptions={MENU_FIT}
                 label="Model"
+                layout="below"
                 rgOptions={modelOptions}
                 selectedOption={view.settings.ai_model || null}
                 strDefaultLabel="Choose a model"
@@ -363,24 +435,12 @@ function AiCard({ view, apply }: { view: View; apply: (v: View | undefined) => v
             </PanelSectionRow>
           )}
           <PanelSectionRow>
-            <ButtonItem
-              layout="below"
-              disabled={busy || !view.settings.ai_model || !view.game}
-              description={<span style={note}>{aiPrivacyLine(provider.name)}</span>}
-              onClick={async () => {
-                setBusy(true);
-                try {
-                  apply((await generateAi()).view);
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              {busy ? "Generating..." : "Generate AI recommendation"}
-            </ButtonItem>
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <div style={note}>{capLine(view.ai.used_today, view.settings.ai_daily_cap)}</div>
+            <div style={note}>
+              {view.settings.ai_model
+                ? "Generate AI recommendation is near the top of the panel."
+                : "Choose a model to turn on Generate AI recommendation."}{" "}
+              {capLine(view.ai.used_today, view.settings.ai_daily_cap)}
+            </div>
           </PanelSectionRow>
         </>
       )}
@@ -389,44 +449,6 @@ function AiCard({ view, apply }: { view: View; apply: (v: View | undefined) => v
           <div style={note}>{message}</div>
         </PanelSectionRow>
       )}
-      {result && (
-        <PanelSectionRow>
-          <div style={result.error ? warn : { ...warn, background: "#2a3a4f" }}>{aiStatus(result)}</div>
-        </PanelSectionRow>
-      )}
-      {result?.rec &&
-        groups(result.rec).map((g) => (
-          <PanelSectionRow key={g.title}>
-            <Field focusable bottomSeparator="none" label={g.title}>
-              <div style={note}>
-                {g.lines.map((line, i) => (
-                  <div key={i}>{line}</div>
-                ))}
-              </div>
-            </Field>
-          </PanelSectionRow>
-        ))}
-      {result?.rec && (result.rec.flags.length > 0 || result.discarded.length > 0) && (
-        <PanelSectionRow>
-          <div style={warn}>
-            {result.rec.flags.map((f, i) => (
-              <div key={`f${i}`}>{f}</div>
-            ))}
-            {result.discarded.length > 0 && <div>Discarded from the reply:</div>}
-            {result.discarded.map((d, i) => (
-              <div key={`d${i}`}>{d}</div>
-            ))}
-          </div>
-        </PanelSectionRow>
-      )}
-      {result?.rec?.notes && (
-        <PanelSectionRow>
-          <Field focusable bottomSeparator="none" label="Model notes">
-            <div style={note}>{result.rec.notes}</div>
-          </Field>
-        </PanelSectionRow>
-      )}
-      {result?.rec?.compat_section && <CompatCard section={result.rec.compat_section} />}
     </PanelSection>
   );
 }
@@ -504,6 +526,7 @@ function AiSettings({ view, apply }: { view: View; apply: (v: View | undefined) 
       </PanelSectionRow>
       <PanelSectionRow>
         <DropdownItem
+          contextMenuPositionOptions={MENU_FIT}
           label="Daily AI request limit"
           rgOptions={[0, 5, 10, 20, 50].map((n) => ({ data: n, label: n === 0 ? "No limit" : `${n} a day` }))}
           selectedOption={view.settings.ai_daily_cap}
@@ -651,6 +674,7 @@ function SettingsSection({ view, apply }: { view: View; apply: (v: View | undefi
     <>
       <PanelSectionRow>
         <DropdownItem
+          contextMenuPositionOptions={MENU_FIT}
           label="Device"
           rgOptions={[{ data: "", label: "Detect automatically" }, ...view.devices.map((d) => ({ data: d.id, label: d.name }))]}
           selectedOption={view.settings.device_override}
@@ -660,6 +684,7 @@ function SettingsSection({ view, apply }: { view: View; apply: (v: View | undefi
       {view.stack.categories.map((cat) => (
         <PanelSectionRow key={cat}>
           <DropdownItem
+            contextMenuPositionOptions={MENU_FIT}
             label={CATEGORY_LABELS[cat] ?? cat}
             description={<span style={note}>Using {optionLabel(view, view.stack.selected[cat] ?? "none")}</span>}
             rgOptions={["auto", "none", ...(view.stack.options[cat] ?? [])].map((id) => ({ data: id, label: optionLabel(view, id) }))}
@@ -738,6 +763,7 @@ function Content() {
   const [loading, setLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [recent, setRecent] = useState<GameRef[]>([]);
+  const [showingAi, setShowingAi] = useState(false);
 
   const apply = (v: View | undefined) => {
     if (v) {
@@ -785,6 +811,7 @@ function Content() {
       </PanelSection>
     );
   }
+  const shown = shownRecommendations(view, showingAi);
 
   return (
     <>
@@ -816,8 +843,10 @@ function Content() {
         {recent.length > 0 && (
           <PanelSectionRow>
             <DropdownItem
+              contextMenuPositionOptions={MENU_FIT}
               label={view.game ? "Pick another game" : "Pick a recent game"}
-              rgOptions={recent.map((g) => ({ data: g.appid, label: g.name }))}
+              layout="below"
+              rgOptions={recent.map((g) => ({ data: g.appid, label: pickerLabel(g.name) }))}
               selectedOption={view.game?.appid ?? view.game?.shortcut_appid ?? null}
               strDefaultLabel="Choose"
               onChange={(o) => {
@@ -836,6 +865,8 @@ function Content() {
         )}
       </PanelSection>
 
+      <AiTopCard view={view} apply={apply} showingAi={shown.ai} setShowingAi={setShowingAi} />
+
       {view.game && protondbLine(view.protondb) && (
         <PanelSection>
           <PanelSectionRow>
@@ -846,15 +877,20 @@ function Content() {
         </PanelSection>
       )}
 
-      <RecommendationCard view={view} index={index} setIndex={setIndex} apply={apply} />
+      <RecommendationCard
+        view={view}
+        recs={shown.recs}
+        discarded={shown.ai ? view.ai.result?.discarded : []}
+        index={shown.ai ? 0 : index}
+        setIndex={setIndex}
+        apply={apply}
+      />
 
-      {view.recommendations[index]?.compat_section && (
-        <CompatCard section={view.recommendations[index].compat_section as CompatSection} />
+      {shown.recs[shown.ai ? 0 : index]?.compat_section && (
+        <CompatCard section={shown.recs[shown.ai ? 0 : index].compat_section as CompatSection} />
       )}
 
       {view.game && <PcgwCard view={view} />}
-
-      {view.game && <AiCard view={view} apply={apply} />}
 
       {view.game && (
         <PanelSection title="More about this game">
@@ -867,6 +903,8 @@ function Content() {
           ))}
         </PanelSection>
       )}
+
+      <AiConfigCard view={view} apply={apply} />
 
       <UpdatesSection update={view.update} name={PLUGIN_NAME} check={() => checkUpdate(true)} />
       <PanelSection title="Settings">

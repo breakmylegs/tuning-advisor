@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { Recommendation, View } from "./types";
 import {
   aiPrivacyLine,
+  aiReady,
+  pickerLabel,
+  shownRecommendations,
   aiStatus,
   capLine,
   currentLines,
@@ -185,4 +188,34 @@ describe("advisor view", () => {
     ]);
     expect(currentLines({ power: null, framegen: null }, rec, names)).toEqual([]);
   });
+
+  it("is AI ready only with a key, a model and a game", () => {
+    const ai = {
+      providers: [{ id: "gemini", name: "Google Gemini", key: { set: true, masked: "...abcd" } }],
+      used_today: 0,
+      result: null,
+    };
+    const ready = { ...view, game: { appid: 1, name: "G" }, ai, settings: { ...view.settings, ai_provider: "gemini", ai_model: "m" } } as unknown as View;
+    expect(aiReady(ready)).toBe(true);
+    expect(aiReady({ ...ready, settings: { ...ready.settings, ai_model: "" } })).toBe(false);
+    expect(aiReady({ ...ready, game: null } as unknown as View)).toBe(false);
+    expect(aiReady({ ...ready, ai: { ...ai, providers: [{ ...ai.providers[0], key: { set: false, masked: "" } }] } } as unknown as View)).toBe(false);
+  });
+
+  it("shows the AI recommendation in place of the reports until switched back", () => {
+    const aiRec = { ...rec, source: "ai" } as Recommendation;
+    const withAi = { ...view, recommendations: [rec, rec], ai: { providers: [], used_today: 0, result: { rec: aiRec } } } as unknown as View;
+    expect(shownRecommendations(withAi, true)).toEqual({ recs: [aiRec], ai: true });
+    expect(shownRecommendations(withAi, false)).toEqual({ recs: [rec, rec], ai: false });
+    const noAi = { ...withAi, ai: { providers: [], used_today: 0, result: { rec: null } } } as unknown as View;
+    expect(shownRecommendations(noAi, true)).toEqual({ recs: [rec, rec], ai: false });
+  });
+
+  it("shortens long game names for the picker", () => {
+    expect(pickerLabel("Cyberpunk 2077")).toBe("Cyberpunk 2077");
+    const long = "The Elder Scrolls V: Skyrim Special Edition Anniversary Upgrade";
+    expect(pickerLabel(long).length).toBeLessThanOrEqual(36);
+    expect(pickerLabel(long).endsWith("...")).toBe(true);
+  });
 });
+
