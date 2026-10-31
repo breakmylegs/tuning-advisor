@@ -29,6 +29,7 @@ import {
   SECRET_FOR,
   aiPrivacyLine,
   aiReady,
+  antiCheatLines,
   pickerLabel,
   shownRecommendations,
   aiStatus,
@@ -594,12 +595,61 @@ function PcgwCard({ view }: { view: View }) {
   );
 }
 
+function AntiCheatCard({ view }: { view: View }) {
+  const state = view.anticheat;
+  if (!state?.enabled || (!state.entry && !state.error)) return null;
+  const entry = state.entry;
+  return (
+    <PanelSection title="Anti-cheat">
+      {state.error && (
+        <PanelSectionRow>
+          <div style={warn}>Could not load the anti-cheat list. {state.error.message}</div>
+        </PanelSectionRow>
+      )}
+      {entry && (
+        <>
+          <PanelSectionRow>
+            <Field focusable bottomSeparator="none" childrenLayout="below">
+              <div style={entry.blocked ? warn : note}>
+                {antiCheatLines(entry).map((line, i) => (
+                  <div key={i}>{line}</div>
+                ))}
+              </div>
+            </Field>
+          </PanelSectionRow>
+          <PanelSectionRow>
+            <ButtonItem layout="below" onClick={() => open(entry.url)}>
+              Open on Are We Anti-Cheat Yet
+            </ButtonItem>
+          </PanelSectionRow>
+          <PanelSectionRow>
+            <div style={note}>{entry.attribution}</div>
+          </PanelSectionRow>
+        </>
+      )}
+    </PanelSection>
+  );
+}
+
 function SourceSettings({ view, apply }: { view: View; apply: (v: View | undefined) => void }) {
   const [username, setUsername] = useState(view.settings.pcgw_username);
   const [password, setPassword] = useState("");
   const save = async (values: Partial<AdvisorSettings>) => apply((await saveSettings(values)).view);
   return (
     <>
+      <PanelSectionRow>
+        <ToggleField
+          label="Anti-cheat status"
+          description={
+            <span style={note}>
+              Downloads the Are We Anti-Cheat Yet list from GitHub weekly and looks games up on the device. Sends no game
+              name. MIT licence.
+            </span>
+          }
+          checked={view.settings.source_anticheat}
+          onChange={(v) => save({ source_anticheat: v })}
+        />
+      </PanelSectionRow>
       <PanelSectionRow>
         <ToggleField
           label="ProtonDB reports"
@@ -865,6 +915,8 @@ function Content() {
         )}
       </PanelSection>
 
+      {view.game && <AntiCheatCard view={view} />}
+
       <AiTopCard view={view} apply={apply} showingAi={shown.ai} setShowingAi={setShowingAi} />
 
       {view.game && protondbLine(view.protondb) && (
@@ -915,7 +967,7 @@ function Content() {
         </PanelSectionRow>
         {showSettings && <SettingsSection view={view} apply={apply} />}
         <PanelSectionRow>
-          <div style={note}>Recommends only. Never changes Steam, other plugins or game files. Reports from Deck Verified (GPL-3.0).</div>
+          <div style={note}>Recommends only. Never changes Steam, other plugins or game files. Reports from Deck Verified (GPL-3.0). Anti-cheat status from Are We Anti-Cheat Yet (MIT).</div>
         </PanelSectionRow>
       </PanelSection>
     </>

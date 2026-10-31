@@ -1,0 +1,58 @@
+[
+  {
+    "url": "",
+    "name": "Example Shooter",
+    "logo": "",
+    "native": false,
+    "status": "Supported",
+    "reference": "",
+    "anticheats": ["Easy Anti-Cheat"],
+    "notes": [
+      ["All modes work", "https://example.com/news/1"],
+      ["Second note", "https://example.com/news/2"],
+      ["Third note", ""],
+      ["Fourth note is dropped", "https://example.com/news/4"]
+    ],
+    "updates": [{"name": "Enabled EAC", "date": "Apr 6, 2023, 8:00 PM UTC", "reference": "https://example.com"}],
+    "storeIds": {"steam": "976730"},
+    "slug": "example-shooter",
+    "dateChanged": "2024-01-19T04:40:56.000Z"
+  },
+  {
+    "url": "",
+    "name": "Example Battle Royale",
+    "logo": "",
+    "native": false,
+    "status": "Denied",
+    "reference": "",
+    "anticheats": ["BattlEye"],
+    "notes": [["The developer refused Linux support", "javascript:alert(1)"]],
+    "updates": [],
+    "storeIds": {"steam": "1172470"},
+    "slug": "example-battle-royale",
+    "dateChanged": "2025-03-01T00:00:00.000Z"
+  },
+  {
+    "url": "",
+    "name": "Example Store Exclusive",
+    "logo": "",
+    "native": false,
+    "status": "Broken",
+    "reference": "",
+    "anticheats": ["Easy Anti-Cheat"],
+    "notes": [],
+    "updates": [],
+    "storeIds": {"epic": "example"},
+    "slug": "example-store-exclusive",
+    "dateChanged": "2025-03-01T00:00:00.000Z"
+  },
+  {
+    "url": "",
+    "name": "Unknown Status Game",
+    "status": "Maybe",
+    "anticheats": [],
+    "notes": [],
+    "storeIds": {"steam": "10"},
+    "slug": "unknown"
+  }
+]

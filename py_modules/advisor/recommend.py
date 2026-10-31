@@ -233,9 +233,49 @@ def translate(rec: dict[str, Any], registry: Registry, device: dict[str, Any], s
     in_game = rec.get("in_game") or {}
     if in_game.get("preset"):
         lines["in_game"].append(f"Graphics preset: {in_game['preset']}.")
+    lines["battery"] = battery_lines(rec, device)
     out = copy.deepcopy(rec)
     out["lines"] = lines
     return out
+
+
+# Battery
+
+
+# Close enough that the same settings should draw about the same power.
+NEAR_MATCHES = ("exact", "variant", "family")
+
+
+def duration(minutes: float) -> str:
+    total = int(round(minutes))
+    hours, mins = divmod(total, 60)
+    return f"{hours}h {mins:02d}m" if hours else f"{mins}m"
+
+
+def _watt_text(watts: float) -> str:
+    return f"{watts:g} W"
+
+
+def battery_lines(rec: dict[str, Any], device: dict[str, Any]) -> list[str]:
+    """A battery estimate from the report's measured draw and this device's battery.
+    No published model links TDP to whole-device draw, so only measured draw is used."""
+    battery = rec.get("battery") or {}
+    draw = battery.get("draw_w")
+    if not isinstance(draw, (int, float)) or isinstance(draw, bool) or draw <= 0:
+        return []
+    where = rec.get("device_reported") or "the reporting device"
+    wh = device.get("battery_wh")
+    if device.get("generic") or not isinstance(wh, (int, float)) or isinstance(wh, bool) or wh <= 0:
+        reported = battery.get("minutes")
+        line = f"Reported battery draw {_watt_text(draw)} on {where}"
+        return [line + (f", about {duration(reported)} on its battery." if reported else ".")]
+    estimate = duration(wh * 60 / draw)
+    if rec.get("device_match") in NEAR_MATCHES:
+        return [f"Reported battery draw {_watt_text(draw)}. On your {wh:g} Wh battery that is about {estimate}."]
+    return [
+        f"Reported battery draw {_watt_text(draw)} on {where}. At the same draw, your {wh:g} Wh battery lasts "
+        f"about {estimate}. Your screen and chip differ, so treat this as a rough guide."
+    ]
 
 
 # Fallback

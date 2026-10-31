@@ -18,7 +18,7 @@ from plugin_core.secrets import SecretStore, import_path, read_import_file
 from plugin_core.settings import JsonStore
 from plugin_core.update_check import UpdateChecker, load_build_info
 
-from . import compat, current, deckverified, device as devmod, pcgw, protondb, recommend, registry as regmod, stack as stackmod
+from . import anticheat, compat, current, deckverified, device as devmod, pcgw, protondb, recommend, registry as regmod, stack as stackmod
 from .ai import PROVIDERS, SECRET_NAMES
 from .ai.runner import AiRunner
 from .cache import SourceCache
@@ -38,6 +38,7 @@ DEFAULTS: dict[str, Any] = {
     "source_protondb": False,
     "source_pcgw": False,
     "pcgw_username": "",
+    "source_anticheat": True,
 }
 AI_SECRETS = tuple(SECRET_NAMES.values())
 PCGW_SECRET = "pcgw_bot_password"
@@ -54,7 +55,8 @@ class AdvisorService:
                  fetch_reports: Callable[[int | None, str | None], dict] = deckverified.fetch,
                  ai_providers: dict | None = None,
                  protondb_fetch: Callable[[str], bytes] = protondb.download,
-                 pcgw_factory: Callable[..., Any] = pcgw.PcgwClient):
+                 pcgw_factory: Callable[..., Any] = pcgw.PcgwClient,
+                 anticheat_fetch: Callable[[], bytes] | None = None):
         self.settings = JsonStore(os.path.join(settings_dir, "settings.json"), DEFAULTS)
         self.secrets = SecretStore(os.path.join(settings_dir, "secrets.json"), AI_SECRETS + (PCGW_SECRET,))
         self.registry = regmod.load(os.path.join(plugin_dir, "registry"))
@@ -74,6 +76,8 @@ class AdvisorService:
         self.updates = UpdateChecker(build_info, version, os.path.join(runtime_dir, "update.json"), fetch_json)
         self.protondb = protondb.ProtonDbIndex(runtime_dir, protondb.index_url(build_info.get("monorepo", "")),
                                                fetch=protondb_fetch)
+        self.anticheat = anticheat.AntiCheatList(runtime_dir, fetch=anticheat_fetch)
+        self.ac_state: dict[str, Any] = {"enabled": True, "error": None, "entry": None}
         self._pcgw_factory = pcgw_factory
         self._pcgw_ua = pcgw.user_agent(version, build_info.get("monorepo", ""))
         self.pdb_reports: list[dict[str, Any]] = []
@@ -113,6 +117,7 @@ class AdvisorService:
             self.settings.delete_file()
             self.secrets.delete_file()
             self.cache.clear()
+            self.anticheat.delete()
 
     async def _update_loop(self) -> None:
         while True:
@@ -164,38 +169,68 @@ class AdvisorService:
         await self._load_deckverified(force)
         await self._load_protondb()
         await self._load_pcgw(force)
+        await self._load_anticheat(force)
+
+    # Each loader below awaits network or disk work. The player can pick another
+    # game meanwhile, so each builds its result locally and keeps it only if the
+    # game is still the one it started with.
+
+    async def _load_anticheat(self, force: bool = False) -> None:
+        game = self.game
+        enabled = bool(self.settings.get("source_anticheat"))
+        state: dict[str, Any] = {"enabled": enabled, "error": None, "entry": None}
+        self.ac_state = state
+        if not enabled or not game or not (game.get("appid") or game.get("name")):
+            return
+        try:
+            await asyncio.to_thread(self.anticheat.ensure, force)
+        except Exception as exc:  # noqa: BLE001, classified
+            err = classify(exc)
+            self.log.warning("anti-cheat list failed: %s", err.kind)
+            state = dict(state, error=err.to_dict())
+        else:
+            entry = self.anticheat.lookup(game.get("appid"), "" if game.get("appid") else game.get("name", ""))
+            state = dict(state, entry=entry)
+        if self.game is game:
+            self.ac_state = state
 
     async def _load_protondb(self) -> None:
+        game = self.game
         enabled = bool(self.settings.get("source_protondb"))
         self.pdb_reports = []
         self.pdb_state = {"enabled": enabled, "error": None, "summary": None, "dump": None}
-        appid = (self.game or {}).get("appid")
+        appid = (game or {}).get("appid")
         if not enabled or not appid:
             return
+        state = dict(self.pdb_state)
+        reports: list[dict[str, Any]] = []
         try:
             header = await asyncio.to_thread(self.protondb.ensure)
             entry = await asyncio.to_thread(self.protondb.lookup, appid)
         except Exception as exc:  # noqa: BLE001, classified
             err = classify(exc)
             self.log.warning("protondb index failed: %s", err.kind)
-            self.pdb_state["error"] = err.to_dict()
-            return
-        self.pdb_state["dump"] = header.get("dump")
-        self.pdb_state["summary"] = protondb.summary(entry, header)
-        self.pdb_reports = protondb.normalise(entry, appid) if entry else []
+            state["error"] = err.to_dict()
+        else:
+            state["dump"] = header.get("dump")
+            state["summary"] = protondb.summary(entry, header)
+            reports = protondb.normalise(entry, appid) if entry else []
+        if self.game is game:
+            self.pdb_state, self.pdb_reports = state, reports
 
     async def _load_pcgw(self, force: bool) -> None:
+        game = self.game
         enabled = bool(self.settings.get("source_pcgw"))
         self.pcgw_data = None
         self.pcgw_state = {"enabled": enabled, "error": None, "cached": False}
-        game = self.game or {}
-        if not enabled or not (game.get("appid") or game.get("name")):
+        if not enabled or not game or not (game.get("appid") or game.get("name")):
             return
         key = "pcgw:" + self._cache_key()
         cached = self.cache.get(pcgw.SOURCE, key)
         if cached and not force and self.cache.fresh(cached[1]):
             self.pcgw_data, self.pcgw_state["cached"] = cached[0], True
             return
+        state = dict(self.pcgw_state)
         client = self._pcgw_factory(self.settings.get("pcgw_username"), self.secrets.get(PCGW_SECRET), self._pcgw_ua)
         try:
             data = await asyncio.to_thread(client.game, game.get("appid"),
@@ -203,12 +238,14 @@ class AdvisorService:
         except Exception as exc:  # noqa: BLE001, classified
             err = classify(exc)
             self.log.warning("pcgamingwiki failed: %s", err.kind)
-            self.pcgw_state["error"] = err.to_dict()
+            state["error"] = err.to_dict()
+            data = None
             if cached:
-                self.pcgw_data, self.pcgw_state["cached"] = cached[0], True
-            return
-        self.cache.put(pcgw.SOURCE, key, data)
-        self.pcgw_data = data
+                data, state["cached"] = cached[0], True
+        else:
+            self.cache.put(pcgw.SOURCE, key, data)
+        if self.game is game:
+            self.pcgw_data, self.pcgw_state = data, state
 
     async def _load_deckverified(self, force: bool) -> None:
         async with self._lock:
@@ -301,6 +338,7 @@ class AdvisorService:
             "current": self.current_values(selected),
             "protondb": self.pdb_state,
             "pcgw": dict(self.pcgw_state, data=self.pcgw_data, has_password=self.secrets.has(PCGW_SECRET)),
+            "anticheat": self.ac_state,
             "recommendations": self.recommendations(),
             # Before the first check, still send the version and install link.
             "update": self.update_info or self.updates.known(),
@@ -350,7 +388,7 @@ class AdvisorService:
         changed = self.settings.update(values)
         if "device_override" in changed:
             await asyncio.to_thread(self.detect)
-        if {"source_deckverified", "source_protondb", "source_pcgw", "pcgw_username"} & set(changed):
+        if {"source_deckverified", "source_protondb", "source_pcgw", "pcgw_username", "source_anticheat"} & set(changed):
             await self.load_reports(force=False)
         return self.view()
 
@@ -410,4 +448,7 @@ class AdvisorService:
 
     def clear_cache(self) -> dict[str, Any]:
         removed = self.cache.clear()
+        if os.path.exists(self.anticheat.path):
+            self.anticheat.delete()
+            removed += 1
         return {"ok": True, "removed": removed}

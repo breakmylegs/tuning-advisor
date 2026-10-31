@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { Recommendation, View } from "./types";
+import type { AntiCheatEntry, Recommendation, View } from "./types";
 import {
   aiPrivacyLine,
   aiReady,
+  antiCheatLines,
   pickerLabel,
   shownRecommendations,
   aiStatus,
@@ -219,3 +220,41 @@ describe("advisor view", () => {
   });
 });
 
+
+describe("anti-cheat and battery", () => {
+  const entry: AntiCheatEntry = {
+    name: "Example Battle Royale",
+    status: "Denied",
+    anticheats: ["BattlEye"],
+    notes: [{ text: "The developer refused Linux support", url: "" }],
+    changed: "2025-03-01T00:00:00.000Z",
+    meaning: "The developers have said they will not enable the anti-cheat on Linux.",
+    blocked: true,
+    by_name: false,
+    url: "https://areweanticheatyet.com/game/example-battle-royale",
+    attribution: "Anti-cheat status from Are We Anti-Cheat Yet (areweanticheatyet.com), MIT licence.",
+  };
+
+  it("warns plainly when online play is blocked", () => {
+    expect(antiCheatLines(entry)).toEqual([
+      "Denied: The developers have said they will not enable the anti-cheat on Linux.",
+      "Uses BattlEye.",
+      "Online play will not work under Proton. No setting here can change that.",
+      "The developer refused Linux support",
+      "Last changed 1 Mar 2025.",
+    ]);
+  });
+
+  it("says when a shortcut was matched by name", () => {
+    const lines = antiCheatLines({ ...entry, status: "Running", blocked: false, by_name: true, notes: [], anticheats: [] });
+    expect(lines[0].startsWith("Running:")).toBe(true);
+    expect(lines.some((l) => l.includes("No setting here"))).toBe(false);
+    expect(lines[lines.length - 1]).toBe('Matched by name to "Example Battle Royale". Check it is the same game.');
+  });
+
+  it("shows battery lines as their own group, last", () => {
+    const withBattery = { ...rec, lines: { ...rec.lines, battery: ["Reported battery draw 17 W."] } } as Recommendation;
+    const out = groups(withBattery);
+    expect(out[out.length - 1]).toEqual({ title: "Battery", lines: ["Reported battery draw 17 W."] });
+  });
+});

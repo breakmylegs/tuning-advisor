@@ -13,6 +13,7 @@ export interface AdvisorSettings {
   source_protondb: boolean;
   source_pcgw: boolean;
   pcgw_username: string;
+  source_anticheat: boolean;
 }
 
 export interface ProtonDbState {
@@ -118,7 +119,7 @@ export interface Recommendation {
   target_fps?: string | null;
   notes: string;
   flags: string[];
-  lines: Record<"power" | "display" | "scaling" | "frame_gen" | "in_game", string[]>;
+  lines: Partial<Record<"power" | "display" | "scaling" | "frame_gen" | "in_game" | "battery", string[]>>;
 }
 
 export interface Game {
@@ -156,8 +157,31 @@ export interface View {
   current: CurrentValues;
   protondb: ProtonDbState;
   pcgw: PcgwState;
+  anticheat: AntiCheatState;
   recommendations: Recommendation[];
   update: { current: string; latest: string | null; available: boolean; install_url: string | null } | null;
   ai: { providers: AiProviderView[]; used_today: number; result: AiResult | null };
   import_path: string;
+}
+
+export type AntiCheatStatus = "Supported" | "Running" | "Planned" | "Broken" | "Denied";
+
+export interface AntiCheatEntry {
+  name: string;
+  status: AntiCheatStatus;
+  anticheats: string[];
+  notes: { text: string; url: string }[];
+  changed: string;
+  meaning: string;
+  blocked: boolean;
+  // Matched by name, for a non-Steam shortcut. Less certain than an app ID match.
+  by_name: boolean;
+  url: string;
+  attribution: string;
+}
+
+export interface AntiCheatState {
+  enabled: boolean;
+  error: { message: string; detail?: string } | null;
+  entry: AntiCheatEntry | null;
 }

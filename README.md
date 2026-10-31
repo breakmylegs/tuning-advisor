@@ -11,6 +11,8 @@ A Decky Loader plugin. It detects your game, handheld and tuning tools, then rec
 - Checks every recommendation against your device: clamps TDP to its range, drops refresh rates the screen cannot show, and flags frame caps that will stutter.
 - Never recommends FSR 4, which is not officially available on handheld chips under Proton.
 - Falls back to general guidance for light, medium or heavy games when there is no report.
+- Shows the game's anti-cheat status from Are We Anti-Cheat Yet, and says plainly when anti-cheat blocks online play under Proton, so no setting will help.
+- Estimates battery life from the battery draw in each report and your device's battery size. Reports from another device are marked as a rough guide.
 - Shows the Proton version and launch options from each report, by the exact name Steam uses, and where to set them. Shows your current values next to them.
 - Keeps your own launch option wrappers, such as `~/lsfg %command%`, in a combined suggestion and explains each change.
 - Flags launch options that run a command before the game or use shell operators. Never runs or applies any of them.
@@ -20,12 +22,17 @@ A Decky Loader plugin. It detects your game, handheld and tuning tools, then rec
 - Optional PCGamingWiki details with your own bot password: which upscalers and frame generation the game supports, and where it keeps config and save files. Flags a recommended upscaler the game does not list.
 - Optional AI recommendation with your own OpenAI, Anthropic or Google Gemini API key. Off until you set it up, and sent only when you press Generate. The reply replaces the report cards while you view it, labelled "AI generated, unverified". Back to source reports returns to the community reports. It is checked against your device and never applied. Anything out of range is discarded and listed.
 
-Issues and source: [breakmylegs/decky-plugins](https://github.com/breakmylegs/decky-plugins).
+Issues and source: [breakmylegs/decky-plugins](https://github.com/breakmylegs/decky-plugins). This repo is a mirror for releases.
 
 ## Install
 
 1. Decky Settings, General, turn on Developer mode.
-2. Decky Settings, Developer, Install Plugin from URL, then enter the zip URL from the latest release.
+2. Decky Settings, Developer, Install Plugin from URL.
+3. Enter:
+
+```
+https://github.com/breakmylegs/tuning-advisor/releases/latest/download/tuning-advisor.zip
+```
 
 Needs Decky Loader 3.0.4 or later. If you installed 0.5.0 or earlier, uninstall it first, then install this one. Your settings are kept.
 
@@ -45,6 +52,10 @@ Leave "Remove settings on uninstall" off, because an update counts as an uninsta
 Steam Deck LCD and OLED, ROG Ally (Z1 and Z1 Extreme), ROG Ally X, ROG Xbox Ally, ROG Xbox Ally X, Legion Go, Legion Go S (Z2 Go and Z1 Extreme), Legion Go 2 (Z2 and Z2 Extreme), MSI Claw A8, Claw A1M, Claw 7 AI+ and Claw 8 AI+. Entries marked unverified in `registry/devices.json` still need checking against the maker's spec page.
 
 Any other handheld gets a generic profile. To add one, run `tools/capture_device.sh` in Desktop Mode and attach the output to a pull request that adds an entry to `registry/devices.json`.
+
+## Screenshots
+
+To follow after on-device testing.
 
 ## ProtonDB and PCGamingWiki (optional)
 
@@ -75,11 +86,12 @@ Use a dedicated key with a spending limit. Set a daily request limit in settings
 - Tools are detected by reading other plugins' `plugin.json` files and checking whether some files exist. Their settings files are read to show your current values. Nothing is written to them.
 - AI requests, only when you press Generate, send the game name, app ID, device profile, your selected tools and short report excerpts to the provider you picked. No host names, user identifiers or other keys.
 - The game's Steam app ID is sent to deckverified.games. Non-Steam games are looked up by name. Replies are cached for 7 days and shown, marked as cached, when you are offline. Turn the source off in settings.
+- The anti-cheat list is downloaded whole from GitHub at most once a week and searched on the device, so no game name or app ID is sent. Turn it off in settings.
 - Once a day it checks GitHub for a newer release. Turn that off in settings.
 
 ## Sources
 
-Community reports from [Deck Verified](https://deckverified.games) by DeckSettings, GPL-3.0. Each recommendation links to its report. Contains information from [ProtonDB](https://www.protondb.com), made available under the [ODbL](https://opendatacommons.org/licenses/odbl/). Game details from [PCGamingWiki](https://www.pcgamingwiki.com), CC BY-NC-SA. Device match strings from [Handheld Daemon](https://github.com/hhd-dev/hhd), [InputPlumber](https://github.com/ShadowBlip/InputPlumber) and Valve's steamos-manager.
+Community reports from [Deck Verified](https://deckverified.games) by DeckSettings, GPL-3.0. Each recommendation links to its report. Contains information from [ProtonDB](https://www.protondb.com), made available under the [ODbL](https://opendatacommons.org/licenses/odbl/). Game details from [PCGamingWiki](https://www.pcgamingwiki.com), CC BY-NC-SA. Anti-cheat status from [Are We Anti-Cheat Yet](https://areweanticheatyet.com), MIT licence. Device match strings from [Handheld Daemon](https://github.com/hhd-dev/hhd), [InputPlumber](https://github.com/ShadowBlip/InputPlumber) and Valve's steamos-manager.
 
 ## Licence
 

@@ -1,5 +1,15 @@
 // Pure display logic for the advisor panel. Tested with vitest.
-import type { AiResult, CurrentValues, Game, PcgwData, ProtonDbState, ProtonSection, Recommendation, View } from "./types";
+import type {
+  AiResult,
+  AntiCheatEntry,
+  CurrentValues,
+  Game,
+  PcgwData,
+  ProtonDbState,
+  ProtonSection,
+  Recommendation,
+  View,
+} from "./types";
 
 export const MATCH_LABELS: Record<string, string> = {
   exact: "your device",
@@ -24,6 +34,7 @@ export const GROUPS: { key: keyof Recommendation["lines"]; title: string }[] = [
   { key: "scaling", title: "Scaling and upscaler" },
   { key: "frame_gen", title: "Frame generation" },
   { key: "in_game", title: "In-game" },
+  { key: "battery", title: "Battery" },
 ];
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -217,4 +228,16 @@ export function shownRecommendations(view: View, useAi: boolean): { recs: Recomm
 // Long names push Steam's dropdown menu off the side of the panel.
 export function pickerLabel(name: string, limit = 36): string {
   return name.length <= limit ? name : `${name.slice(0, limit - 3).trimEnd()}...`;
+}
+
+// The anti-cheat card. Blocked games get a plain warning that settings cannot help.
+export function antiCheatLines(entry: AntiCheatEntry): string[] {
+  const lines = [`${entry.status}: ${entry.meaning}`];
+  if (entry.anticheats.length) lines.push(`Uses ${entry.anticheats.join(" and ")}.`);
+  if (entry.blocked) lines.push("Online play will not work under Proton. No setting here can change that.");
+  for (const n of entry.notes) lines.push(n.text);
+  const date = shortDate(entry.changed);
+  if (date) lines.push(`Last changed ${date}.`);
+  if (entry.by_name) lines.push(`Matched by name to "${entry.name}". Check it is the same game.`);
+  return lines;
 }

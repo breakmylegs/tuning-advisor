@@ -70,6 +70,18 @@ def _int(value: Any) -> int | None:
     return int(match.group(0)) if match else None
 
 
+def _watts(value: Any) -> float | None:
+    """Whole-device battery draw, sent as text such as "15" or "12.5", or
+    "Unknown". Values outside what a handheld can draw are dropped."""
+    if isinstance(value, bool) or value is None:
+        return None
+    match = re.search(r"\d+(?:\.\d+)?", str(value))
+    if not match:
+        return None
+    watts = float(match.group(0))
+    return watts if 1 <= watts <= 80 else None
+
+
 def _on(value: Any) -> bool | None:
     text = str(value or "").strip().casefold()
     if text in ("on", "yes", "true", "enabled"):
@@ -175,6 +187,12 @@ def normalise(report: dict[str, Any]) -> dict[str, Any]:
             "tool": tool or None,
             "tool_version": version or None,
             "launch_options": launch or None,
+        },
+        # Draw is read from Steam's performance overlay. Minutes are Deck
+        # Verified's own sum for the reporting device's battery.
+        "battery": {
+            "draw_w": _watts(data.get("average_battery_power_draw")),
+            "minutes": _int(data.get("calculated_battery_life_minutes")),
         },
         "rating": _text(data.get("performance_rating"), 30) or None,
         "target_fps": _text(data.get("target_framerate"), 30) or None,

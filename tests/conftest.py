@@ -79,6 +79,17 @@ def decky_home(tmp_path):
     return make
 
 
+@pytest.fixture(autouse=True)
+def no_live_anticheat(monkeypatch):
+    """The anti-cheat source is on by default. Serve the fixture, never the network."""
+    from advisor import anticheat
+
+    with open(os.path.join(FIXTURES, "awacy_games.json"), "rb") as handle:
+        body = handle.read()
+    monkeypatch.setattr(anticheat, "download", lambda *a, **k: body)
+    return body
+
+
 @pytest.fixture()
 def dv_fixture():
     with open(os.path.join(FIXTURES, "deckverified_1091500.json"), encoding="utf-8") as handle:
